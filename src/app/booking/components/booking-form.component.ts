@@ -28,7 +28,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       }
 
       <button type="submit" [disabled]="pending()" [attr.aria-busy]="pending()">
-        {{ pending() ? 'Creating hold?' : 'Create hold' }}
+        {{ pending() ? 'Creating hold...' : 'Create hold' }}
       </button>
       @if (failure()) { <p role="alert">{{ failure() }}</p> }
     </form>
