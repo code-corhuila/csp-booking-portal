@@ -17,8 +17,35 @@ export interface ApiError {
   userMessage: string;
 }
 
+function isFieldError(value: unknown): value is FieldError {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as { field?: unknown }).field === 'string'
+    && typeof (value as { message?: unknown }).message === 'string';
+}
+
 export function asApiError(err: unknown): ApiError {
-  return typeof err === 'object' && err !== null && 'userMessage' in err
-    ? (err as ApiError)
-    : { status: 0, code: 'UNKNOWN', message: String(err), details: [], traceId: '', userMessage: 'Something went wrong.' };
-}
+  if (typeof err === 'object' && err !== null) {
+    const candidate = err as Partial<ApiError>;
+    if (
+      typeof candidate.status === 'number'
+      && typeof candidate.code === 'string'
+      && typeof candidate.message === 'string'
+      && Array.isArray(candidate.details)
+      && candidate.details.every(isFieldError)
+      && typeof candidate.traceId === 'string'
+      && typeof candidate.userMessage === 'string'
+    ) {
+      return candidate as ApiError;
+    }
+  }
+
+  return {
+    status: 0,
+    code: 'UNKNOWN',
+    message: String(err),
+    details: [],
+    traceId: '',
+    userMessage: 'Something went wrong.',
+  };
+}

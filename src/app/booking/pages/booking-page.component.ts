@@ -33,7 +33,6 @@ type View =
         <option value="HELD">Active hold</option>
         <option value="CONFIRMED">Confirmed</option>
         <option value="EXPIRED">Expired</option>
-        <option value="CANCELLED">Cancelled</option>
       </select>
 
       @switch (view().state) {
@@ -65,7 +64,7 @@ type View =
                 <tr>
                   <td>{{ b.id }}</td>
                   <td>{{ b.showtimeId }}</td>
-                  <td>{{ b.seatIds.join(', ') }}</td>
+                  <td>{{ b.seatLabels.join(', ') }}</td>
                   <td>{{ b.movieTitleSnapshot }}</td>
                   <td>{{ b.roomNameSnapshot }}</td>
                   <td>{{ b.status }}</td>

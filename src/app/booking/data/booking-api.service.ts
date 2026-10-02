@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Booking, BookingStatus, HoldRequest, HoldResponse, Page } from '../model/booking';
+import { Booking, BookingStatus, HoldRequest, Page } from '../model/booking';
 
 /**
  * Typed calls to this domain's endpoints. The injected HttpClient is the SHELL's:
@@ -14,8 +14,8 @@ export class BookingApiService {
   private readonly base = '/api/v1/booking';
 
   /** Create a temporary seat hold. */
-  hold(body: HoldRequest, idempotencyKey: string): Observable<HoldResponse> {
-    return this.http.post<HoldResponse>(`${this.base}/holds`, body, {
+  hold(body: HoldRequest, idempotencyKey: string): Observable<Booking> {
+    return this.http.post<Booking>(`${this.base}/holds`, body, {
       headers: { 'Idempotency-Key': idempotencyKey }
     });
   }
@@ -26,8 +26,10 @@ export class BookingApiService {
   }
 
   /** Confirm a held reservation. */
-  confirm(id: string): Observable<Booking> {
-    return this.http.post<Booking>(`${this.base}/reservations/${encodeURIComponent(id)}/confirm`, null);
+  confirm(id: string, idempotencyKey: string): Observable<Booking> {
+    return this.http.post<Booking>(`${this.base}/reservations/${encodeURIComponent(id)}/confirm`, null, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
   }
 
   /** List reservations (for future HU). */
