@@ -1,29 +1,24 @@
 /** The contract of csp-booking-api. Field names match the API exactly (camelCase). */
-export type BookingStatus = 'HELD' | 'CONFIRMED' | 'EXPIRED' | 'CANCELLED';
+export type BookingStatus = 'HELD' | 'CONFIRMED' | 'EXPIRED';
 
 export interface Booking {
   id: string;
   showtimeId: string;
-  seatIds: string[];
+  seatLabels: string[];
   status: BookingStatus;
+  userId: string;
+  expiresAt: string | null;
   movieTitleSnapshot: string;
   roomNameSnapshot: string;
+  totalAmount: number;
   createdAt: string;
   confirmedAt: string | null;
 }
 
 export interface HoldRequest {
   showtimeId: string;
-  seatIds: string[];
-}
-
-export interface HoldResponse {
-  id: string;
-  expiresAt: string;
-}
-
-export interface ConfirmHoldRequest {
-  // Empty body - confirmation uses the hold ID from path
+  seatLabels: string[];
+  holdDurationSeconds?: number;
 }
 
 /** The shared pagination shape: every list of the system answers like this. */
