@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  csp-booking-portal:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: csp-booking-portal
+    ports:
+      - "4202:80"
+    networks:
+      - csp-frontend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  csp-frontend:
+    external: true
+    name: csp-frontend
