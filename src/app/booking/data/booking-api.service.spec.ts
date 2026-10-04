@@ -58,4 +58,15 @@ describe('BookingApiService', () => {
     expect(listRequest.request.method).toBe('GET');
     listRequest.flush({ data: [], meta: { page: 2, limit: 20, total: 0, totalPages: 0 } });
   });
+
+  it('sends the createdBefore filter only when it is given', () => {
+    service.list(1, 20, undefined, '2026-10-04T12:00:00Z').subscribe();
+    const filtered = http.expectOne(request => request.params.get('createdBefore') === '2026-10-04T12:00:00Z');
+    filtered.flush({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+
+    service.list(1, 20).subscribe();
+    const plain = http.expectOne(request => request.url === '/api/v1/booking/reservations');
+    expect(plain.request.params.has('createdBefore')).toBe(false);
+    plain.flush({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+  });
 });
