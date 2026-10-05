@@ -18,6 +18,9 @@ export interface Booking {
 export interface HoldRequest {
   showtimeId: string;
   seatLabels: string[];
+  /** Cut 2 display snapshot: the API requires both while it runs without CATALOG_BASE_URL and ignores them otherwise. */
+  movieTitle?: string;
+  roomName?: string;
   holdDurationSeconds?: number;
 }
 
