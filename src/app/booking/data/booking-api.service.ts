@@ -38,4 +38,4 @@ export class BookingApiService {
     if (status) params = params.set('status', status);
     return this.http.get<Page<Booking>>(`${this.base}/reservations`, { params });
   }
-}
+}
