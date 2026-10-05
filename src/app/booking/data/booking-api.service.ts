@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+﻿import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Booking, BookingStatus, HoldRequest, Page } from '../model/booking';
@@ -39,4 +39,4 @@ export class BookingApiService {
     if (createdBefore) params = params.set('createdBefore', createdBefore);
     return this.http.get<Page<Booking>>(`${this.base}/reservations`, { params });
   }
-}
+}

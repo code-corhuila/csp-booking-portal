@@ -1,4 +1,4 @@
-/** The contract of csp-booking-api. Field names match the API exactly (camelCase). */
+﻿/** The contract of csp-booking-api. Field names match the API exactly (camelCase). */
 export type BookingStatus = 'HELD' | 'CONFIRMED' | 'EXPIRED';
 
 export interface Booking {
@@ -28,4 +28,4 @@ export interface HoldRequest {
 export interface Page<T> {
   data: T[];
   meta: { page: number; limit: number; total: number; totalPages: number };
-}
+}
