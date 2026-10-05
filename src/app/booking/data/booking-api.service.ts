@@ -32,10 +32,11 @@ export class BookingApiService {
     });
   }
 
-  /** List reservations (for future HU). */
-  list(page: number, limit: number, status?: BookingStatus): Observable<Page<Booking>> {
+  /** List the caller's reservations, newest first. `createdBefore` is an RFC 3339 instant (UTC). */
+  list(page: number, limit: number, status?: BookingStatus, createdBefore?: string): Observable<Page<Booking>> {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (status) params = params.set('status', status);
+    if (createdBefore) params = params.set('createdBefore', createdBefore);
     return this.http.get<Page<Booking>>(`${this.base}/reservations`, { params });
   }
 }
