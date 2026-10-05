@@ -1,0 +1,77 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "csp-booking-portal": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {},
+          "configurations": {
+            "production": { "target": "csp-booking-portal:esbuild:production" },
+            "development": { "target": "csp-booking-portal:esbuild:development", "dev": true }
+          },
+          "defaultConfiguration": "production"
+        },
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/csp-booking-portal",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "polyfills": ["es-module-shims"],
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              { "glob": "**/*", "input": "public", "output": "/" }
+            ],
+            "styles": [],
+            "scripts": []
+          },
+          "configurations": {
+            "production": { "outputHashing": "all" },
+            "development": { "optimization": false, "extractLicenses": false, "sourceMap": true }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": { "target": "csp-booking-portal:serve-original:development", "rebuildDelay": 0, "dev": true, "port": 4202 }
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "development": { "buildTarget": "csp-booking-portal:esbuild:development" }
+          },
+          "defaultConfiguration": "development",
+          "options": { "port": 4202 }
+        },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n",
+          "options": { "browserTarget": "csp-booking-portal:esbuild" }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+          }
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": ["es-module-shims"],
+            "tsConfig": "tsconfig.spec.json",
+            "assets": ["src/favicon.ico", "src/assets"],
+            "styles": [],
+            "scripts": []
+          }
+        }
+      }
+    }
+  },
+  "cli": { "analytics": false }
+}
