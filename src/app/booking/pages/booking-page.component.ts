@@ -36,7 +36,7 @@ type View =
       </select>
 
       @switch (view().state) {
-        @case ('loading') { <p role="status">Loading bookings?</p> }
+        @case ('loading') { <p role="status">Loading bookings...</p> }
         @case ('error') {
           <div role="alert">
             <p>{{ errorMessage() }}</p>
@@ -69,7 +69,7 @@ type View =
                   <td>{{ b.roomNameSnapshot }}</td>
                   <td>{{ b.status }}</td>
                   <td>{{ date(b.createdAt) }}</td>
-                  <td>{{ b.confirmedAt ? date(b.confirmedAt) : '?' }}</td>
+                  <td>{{ b.confirmedAt ? date(b.confirmedAt) : 'Not confirmed' }}</td>
                 </tr>
               }
             </tbody>
