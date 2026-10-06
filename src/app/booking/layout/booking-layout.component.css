@@ -119,7 +119,15 @@
 }
 
 /* Tables and states */
-.csp-booking table { width: 100%; border-collapse: collapse; background: var(--color-bg-surface); }
+.csp-booking table {
+  display: block; /* lets a narrow viewport scroll the table instead of squeezing every column */
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  background: var(--color-bg-surface);
+}
+.csp-booking td:first-child,
+.csp-booking td:nth-child(2) { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: var(--font-size-xs); white-space: nowrap; }
 .csp-booking caption { padding: 8px 0; color: var(--color-text-secondary); text-align: left; }
 .csp-booking th,
 .csp-booking td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
