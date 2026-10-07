@@ -37,32 +37,79 @@ function styleRulesOf(rules: CSSRuleList): CSSStyleRule[] {
   });
 }
 
-function rulesOfLayoutStylesheet(): CSSStyleRule[] {
+/**
+ * At-rules that are global by nature: a keyframes name, a font family, an import or a page rule
+ * cannot be hung from `.csp-booking`, so the stylesheet must not declare any. `@media` and
+ * `@supports` only wrap style rules and are walked into.
+ */
+function globalAtRulesOf(rules: CSSRuleList): string[] {
+  return Array.from(rules).flatMap((rule) => {
+    if (rule instanceof CSSStyleRule) return [];
+    if (rule instanceof CSSMediaRule || rule instanceof CSSSupportsRule) return globalAtRulesOf(rule.cssRules);
+    return [rule.cssText.slice(0, 40)];
+  });
+}
+
+/** The stylesheet of the layout, recognized by a rule that only the layout declares (not by its position). */
+function layoutStylesheet(): CSSStyleSheet | undefined {
   TestBed.configureTestingModule({ imports: [BookingLayoutComponent], providers: [provideRouter([])] })
     .createComponent(BookingLayoutComponent)
     .detectChanges();
-  for (const sheet of Array.from(document.styleSheets)) {
-    let rules: CSSStyleRule[];
+  return Array.from(document.styleSheets).find((sheet) => {
     try {
-      rules = styleRulesOf(sheet.cssRules);
+      return styleRulesOf(sheet.cssRules).some((rule) => rule.selectorText.includes('.csp-booking .seat'));
     } catch {
-      continue; // a stylesheet of another origin cannot be read
+      return false; // a stylesheet of another origin cannot be read
     }
-    if (rules.some((rule) => rule.selectorText.includes('.csp-booking .seat'))) return rules;
-  }
-  return [];
+  });
 }
 
 describe('booking layout stylesheet', () => {
-  it('is found in the document once the layout is rendered, so that the guard below is not vacuous', () => {
-    expect(rulesOfLayoutStylesheet().length).toBeGreaterThan(30);
+  it('is found in the document once the layout is rendered, so that the guards below are not vacuous', () => {
+    const sheet = layoutStylesheet();
+
+    expect(sheet).withContext('the layout stylesheet').toBeDefined();
+    expect(styleRulesOf(sheet!.cssRules).length).toBeGreaterThan(0);
   });
 
   it('scopes every selector of every rule under .csp-booking', () => {
-    const unscoped = rulesOfLayoutStylesheet()
+    const unscoped = styleRulesOf(layoutStylesheet()!.cssRules)
       .flatMap((rule) => selectorsOf(rule.selectorText))
       .filter((selector) => !SCOPE.test(selector));
 
     expect(unscoped).withContext('selectors outside .csp-booking').toEqual([]);
+  });
+
+  it('declares no at-rule that is global by nature (keyframes, font faces, imports, page rules)', () => {
+    expect(globalAtRulesOf(layoutStylesheet()!.cssRules)).withContext('global at-rules').toEqual([]);
+  });
+});
+
+describe('selectorsOf', () => {
+  it('splits a selector list on its top-level commas', () => {
+    expect(selectorsOf('.csp-booking a, .seat')).toEqual(['.csp-booking a', '.seat']);
+  });
+
+  it('does not split on a comma inside :not(...) or :is(...)', () => {
+    expect(selectorsOf('.csp-booking:not(.a, .b), .x')).toEqual(['.csp-booking:not(.a, .b)', '.x']);
+    expect(selectorsOf('.csp-booking :is(h1, h2)')).toEqual(['.csp-booking :is(h1, h2)']);
+  });
+
+  it('leaves a single selector as it is', () => {
+    expect(selectorsOf('.csp-booking .seat:hover:not(:disabled)')).toEqual(['.csp-booking .seat:hover:not(:disabled)']);
+  });
+});
+
+describe('the scope pattern', () => {
+  it('accepts the scope class alone, with a descendant, a pseudo-class or a second class', () => {
+    for (const selector of ['.csp-booking', '.csp-booking h1', '.csp-booking:hover', '.csp-booking.dark .x']) {
+      expect(SCOPE.test(selector)).withContext(selector).toBeTrue();
+    }
+  });
+
+  it('rejects the document selectors, bare classes and look-alike class names', () => {
+    for (const selector of ['body', ':root', 'html', '.seat', '.csp-bookingx h1', '.csp-booking-x', 'div .csp-booking']) {
+      expect(SCOPE.test(selector)).withContext(selector).toBeFalse();
+    }
   });
 });
