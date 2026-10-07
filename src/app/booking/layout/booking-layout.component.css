@@ -137,6 +137,21 @@
 .csp-booking [role='status'] { color: var(--color-text-secondary); }
 .csp-booking nav { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
 
+/* Reservation summary: label and value side by side */
+.csp-booking dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+  max-width: 480px;
+  margin: 0 0 16px;
+  padding: 20px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.csp-booking dt { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.csp-booking dd { margin: 0; }
+
 /* Seat map */
 .csp-booking .screen-container { margin-bottom: 25px; text-align: center; perspective: 400px; }
 .csp-booking .screen {
