@@ -129,6 +129,19 @@ describe('SeatMapPageComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it('joins the backend reason and the clarification as two sentences, whatever the case and the final period of the reason', () => {
+    // The wording the running API answers with: lower case and no final period
+    api.hold.and.returnValue(throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'one or more seats are not available')));
+    const root = render();
+    pick(root, 'A2');
+
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    expect(root.querySelector('[role="alert"]')?.textContent?.trim())
+      .toBe('One or more seats are not available. No seat was held; pick other seats and try again.');
+  });
+
   it('lets the client pick other seats after a seat conflict, with a new Idempotency-Key', () => {
     api.hold.and.returnValues(
       throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'At least one requested seat is not available.')),

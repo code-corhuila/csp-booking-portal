@@ -120,7 +120,8 @@ export class SeatMapPageComponent {
             // The API holds every seat or none: the client only has to pick again
             this.selected.set(new Set());
             this.attemptKey = null;
-            this.failure.set(`${error.userMessage} No seat was held; pick other seats and try again.`);
+            const reason = error.userMessage.trim().replace(/[.\s]+$/, '');
+            this.failure.set(`${reason.charAt(0).toUpperCase()}${reason.slice(1)}. No seat was held; pick other seats and try again.`);
           } else {
             this.failure.set(error.userMessage);
           }
