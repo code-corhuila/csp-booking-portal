@@ -168,6 +168,24 @@ describe('CheckoutPageComponent', () => {
     expect(root.querySelector('button')).toBeNull();
   });
 
+  it('keeps the failure and the Confirm button when the reconciliation read fails too, and a retry reuses the key', () => {
+    api.getReservation.and.returnValues(
+      of(booking()),
+      throwError(() => apiError(0, 'TIMEOUT', 'The server took too long to answer.')),
+      throwError(() => apiError(0, 'TIMEOUT', 'The server took too long to answer.')),
+    );
+    api.confirm.and.returnValue(throwError(() => apiError(0, 'NETWORK_ERROR', 'The server cannot be reached.')));
+    const root = render();
+
+    click(root, 'Confirm');
+    click(root, 'Confirm');
+
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('The server cannot be reached.');
+    expect(root.querySelector('button')?.textContent).toContain('Confirm');
+    const keys = api.confirm.calls.allArgs().map(args => args[1]);
+    expect(keys[0]).toBe(keys[1]);
+  });
+
   it('shows the expired state when the hold expired while the confirmation was failing', () => {
     api.getReservation.and.returnValues(of(booking()), of(booking({ status: 'EXPIRED' })));
     api.confirm.and.returnValue(throwError(() => apiError(422, 'INVALID_STATUS_TRANSITION', 'The reservation has expired.')));
