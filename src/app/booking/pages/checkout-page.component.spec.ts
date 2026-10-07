@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { ApiError } from '../../shell-contract';
 import { BookingApiService } from '../data/booking-api.service';
@@ -32,16 +32,20 @@ function apiError(status: number, code: string, message: string): ApiError {
 describe('CheckoutPageComponent', () => {
   let api: jasmine.SpyObj<BookingApiService>;
 
+  let router: jasmine.SpyObj<Router>;
+  let route: ActivatedRoute;
   let fixture: ComponentFixture<CheckoutPageComponent>;
   let params: BehaviorSubject<ParamMap>;
 
   function render(): HTMLElement {
     params = new BehaviorSubject(convertToParamMap({ id: ID }));
+    route = { paramMap: params } as unknown as ActivatedRoute;
     TestBed.configureTestingModule({
       imports: [CheckoutPageComponent],
       providers: [
         { provide: BookingApiService, useValue: api },
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: route },
       ],
     });
     fixture = TestBed.createComponent(CheckoutPageComponent);
@@ -55,7 +59,49 @@ describe('CheckoutPageComponent', () => {
   };
 
   beforeEach(() => {
+    // The hold of the fixtures expires at 20:10; the page counts down from "now"
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date('2026-10-06T20:00:00Z'));
     api = jasmine.createSpyObj<BookingApiService>('BookingApiService', ['getReservation', 'confirm']);
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    router.navigate.and.resolveTo(true);
+  });
+
+  afterEach(() => jasmine.clock().uninstall());
+
+  it('counts down to the expiry of the hold, from expiresAt', () => {
+    api.getReservation.and.returnValue(of(booking()));
+    const root = render();
+    expect(root.querySelector('[role="timer"]')?.textContent).toContain('10:00');
+
+    jasmine.clock().tick(1000);
+    fixture.detectChanges();
+
+    expect(root.querySelector('[role="timer"]')?.textContent).toContain('09:59');
+  });
+
+  it('closes the confirmation when the time is over and offers to choose seats again', () => {
+    api.getReservation.and.returnValue(of(booking()));
+    const root = render();
+
+    jasmine.clock().tick(10 * 60 * 1000);
+    fixture.detectChanges();
+
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('hold time is over');
+    expect(root.querySelector('[role="timer"]')).toBeNull();
+    expect(Array.from(root.querySelectorAll('button')).some(b => b.textContent?.includes('Confirm'))).toBeFalse();
+
+    click(root, 'Choose seats again');
+
+    expect(router.navigate).toHaveBeenCalledOnceWith(['../../showtime', booking().showtimeId], { relativeTo: route });
+  });
+
+  it('shows no countdown once the reservation is confirmed', () => {
+    api.getReservation.and.returnValue(of(booking({ status: 'CONFIRMED', expiresAt: null })));
+
+    const root = render();
+
+    expect(root.querySelector('[role="timer"]')).toBeNull();
   });
 
   it('shows the summary of the held reservation with a Confirm button', () => {
