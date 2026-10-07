@@ -11,6 +11,10 @@ export const BOOKING_ROUTES: Routes = [
         loadComponent: () => import('./pages/booking-page.component').then(m => m.BookingPageComponent),
       },
       {
+        path: 'showtime/:id',
+        loadComponent: () => import('./pages/seat-map-page.component').then(m => m.SeatMapPageComponent),
+      },
+      {
         path: 'checkout/:id',
         loadComponent: () => import('./pages/checkout-page.component').then(m => m.CheckoutPageComponent),
       },
