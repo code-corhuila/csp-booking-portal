@@ -213,6 +213,17 @@
 .csp-booking .legend-item { display: flex; align-items: center; gap: 8px; }
 .csp-booking .legend-box { width: 16px; height: 16px; border-radius: 4px; }
 
+/* Notice of the product demo: the data on screen is a sample */
+.csp-booking .demo-notice {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  color: var(--color-text-primary);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid var(--color-brand-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
 /* Modal and toasts */
 .csp-booking .modal {
   position: fixed;
