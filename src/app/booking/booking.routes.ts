@@ -1,10 +1,14 @@
 import { Routes } from '@angular/router';
+import { BookingApiService } from './data/booking-api.service';
+import { ResilientBookingApiService } from './data/resilient-booking-api.service';
 import { BookingLayoutComponent } from './layout/booking-layout.component';
 
 export const BOOKING_ROUTES: Routes = [
   {
     path: '',
     component: BookingLayoutComponent,
+    // The list of reservations shows the burned-in sample of the demo when the service cannot answer
+    providers: [{ provide: BookingApiService, useClass: ResilientBookingApiService }],
     children: [
       {
         path: '',
