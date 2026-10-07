@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { asApiError } from '../../shell-contract';
 import { BookingApiService } from '../data/booking-api.service';
 import { Booking } from '../model/booking';
@@ -59,7 +60,8 @@ type View =
 export class CheckoutPageComponent {
   private readonly api = inject(BookingApiService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
+  private id = '';
+  private request?: Subscription;
   // One key per intention: retrying the same confirmation reuses it
   private attemptKey: string | null = null;
 
@@ -68,12 +70,22 @@ export class CheckoutPageComponent {
   readonly failure = signal<string | null>(null);
 
   constructor() {
-    this.load();
+    // The router reuses this component when only :id changes, so the id is read reactively
+    inject(ActivatedRoute).paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        this.id = params.get('id') ?? '';
+        this.attemptKey = null;
+        this.pending.set(false);
+        this.failure.set(null);
+        this.load();
+      });
   }
 
   load(): void {
+    this.request?.unsubscribe(); // a newer request replaces an older one
     this.view.set({ state: 'loading' });
-    this.api.getReservation(this.id)
+    this.request = this.api.getReservation(this.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (booking) => this.view.set({ state: 'ready', booking }),
@@ -86,7 +98,8 @@ export class CheckoutPageComponent {
     this.attemptKey ??= crypto.randomUUID();
     this.pending.set(true);
     this.failure.set(null);
-    this.api.confirm(this.id, this.attemptKey)
+    this.request?.unsubscribe();
+    this.request = this.api.confirm(this.id, this.attemptKey)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (booking) => {
@@ -94,9 +107,26 @@ export class CheckoutPageComponent {
           this.attemptKey = null;
           this.view.set({ state: 'ready', booking });
         },
-        error: (err: unknown) => {
+        error: (err: unknown) => this.reconcile(asApiError(err).userMessage),
+      });
+  }
+
+  /**
+   * A failed confirmation does not tell whether the backend applied it: the response may have
+   * been lost after the transition. Read the reservation again before offering a retry.
+   */
+  private reconcile(message: string): void {
+    this.request = this.api.getReservation(this.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (booking) => {
           this.pending.set(false);
-          this.failure.set(asApiError(err).userMessage);
+          this.view.set({ state: 'ready', booking });
+          if (booking.status === 'HELD') this.failure.set(message);
+        },
+        error: () => {
+          this.pending.set(false);
+          this.failure.set(message);
         },
       });
   }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { ApiError } from '../../shell-contract';
 import { BookingApiService } from '../data/booking-api.service';
 import { Booking } from '../model/booking';
@@ -33,13 +33,15 @@ describe('CheckoutPageComponent', () => {
   let api: jasmine.SpyObj<BookingApiService>;
 
   let fixture: ComponentFixture<CheckoutPageComponent>;
+  let params: BehaviorSubject<ParamMap>;
 
   function render(): HTMLElement {
+    params = new BehaviorSubject(convertToParamMap({ id: ID }));
     TestBed.configureTestingModule({
       imports: [CheckoutPageComponent],
       providers: [
         { provide: BookingApiService, useValue: api },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: ID }) } } },
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
       ],
     });
     fixture = TestBed.createComponent(CheckoutPageComponent);
@@ -103,6 +105,45 @@ describe('CheckoutPageComponent', () => {
     const keys = api.confirm.calls.allArgs().map(args => args[1]);
     expect(keys.length).toBe(2);
     expect(keys[0]).toBe(keys[1]);
+  });
+
+  it('shows the success screen when the confirmation was already applied and only its response was lost', () => {
+    api.getReservation.and.returnValues(
+      of(booking()),
+      of(booking({ status: 'CONFIRMED', expiresAt: null, confirmedAt: '2026-10-06T20:05:00Z' })),
+    );
+    api.confirm.and.returnValue(throwError(() => apiError(0, 'NETWORK_ERROR', 'The server cannot be reached.')));
+    const root = render();
+
+    click(root, 'Confirm');
+
+    expect(api.getReservation).toHaveBeenCalledTimes(2);
+    expect(root.querySelector('[role="status"].toast-success')?.textContent).toContain('Reservation confirmed');
+    expect(root.querySelector('button')).toBeNull();
+  });
+
+  it('shows the expired state when the hold expired while the confirmation was failing', () => {
+    api.getReservation.and.returnValues(of(booking()), of(booking({ status: 'EXPIRED' })));
+    api.confirm.and.returnValue(throwError(() => apiError(422, 'INVALID_STATUS_TRANSITION', 'The reservation has expired.')));
+    const root = render();
+
+    click(root, 'Confirm');
+
+    expect(root.textContent).toContain('This reservation has expired');
+    expect(root.querySelector('button')).toBeNull();
+  });
+
+  it('loads the new reservation when the route reuses the page for another id', () => {
+    const other = '99999999-9999-9999-9999-999999999999';
+    api.getReservation.and.callFake((id: string) => of(booking({ id, seatLabels: id === ID ? ['A1'] : ['F8'] })));
+    const root = render();
+
+    params.next(convertToParamMap({ id: other }));
+    fixture.detectChanges();
+
+    expect(api.getReservation).toHaveBeenCalledWith(other);
+    expect(root.textContent).toContain('F8');
+    expect(root.textContent).not.toContain('A1');
   });
 
   it('offers no confirmation for an expired reservation', () => {
