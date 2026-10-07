@@ -115,7 +115,8 @@ export class SeatMapPageComponent {
         error: (err: unknown) => {
           const error = asApiError(err);
           this.pending.set(false);
-          if (error.code === 'BUSINESS_RULE_VIOLATION') {
+          // The contract answers a seat conflict with this pair; any other status is an ordinary failure
+          if (error.status === 422 && error.code === 'BUSINESS_RULE_VIOLATION') {
             // The API holds every seat or none: the client only has to pick again
             this.selected.set(new Set());
             this.attemptKey = null;

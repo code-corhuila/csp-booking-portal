@@ -150,6 +150,20 @@ describe('SeatMapPageComponent', () => {
     expect(root.querySelector('[role="alert"]')).toBeNull();
   });
 
+  it('treats the conflict code with another HTTP status as an ordinary failure: nothing is cleared and nothing is claimed', () => {
+    api.hold.and.returnValue(throwError(() => apiError(400, 'BUSINESS_RULE_VIOLATION', 'The request is not valid.')));
+    const root = render();
+    pick(root, 'A2');
+
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    const alert = root.querySelector('[role="alert"]')?.textContent;
+    expect(alert).toContain('The request is not valid.');
+    expect(alert).not.toContain('No seat was held');
+    expect(seat(root, 'A2').classList).toContain('selected');
+  });
+
   it('shows the backend answer and keeps the selection on any other failure', () => {
     api.hold.and.returnValue(throwError(() => apiError(0, 'NETWORK_ERROR', 'The server cannot be reached.')));
     const root = render();
