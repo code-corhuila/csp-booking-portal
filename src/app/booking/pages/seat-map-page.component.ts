@@ -113,8 +113,16 @@ export class SeatMapPageComponent {
           void this.router.navigate(['../../checkout', id], { relativeTo: this.route });
         },
         error: (err: unknown) => {
+          const error = asApiError(err);
           this.pending.set(false);
-          this.failure.set(asApiError(err).userMessage);
+          if (error.code === 'BUSINESS_RULE_VIOLATION') {
+            // The API holds every seat or none: the client only has to pick again
+            this.selected.set(new Set());
+            this.attemptKey = null;
+            this.failure.set(`${error.userMessage} No seat was held; pick other seats and try again.`);
+          } else {
+            this.failure.set(error.userMessage);
+          }
         },
       });
   }
