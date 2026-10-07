@@ -113,8 +113,18 @@ export class SeatMapPageComponent {
           void this.router.navigate(['../../checkout', id], { relativeTo: this.route });
         },
         error: (err: unknown) => {
+          const error = asApiError(err);
           this.pending.set(false);
-          this.failure.set(asApiError(err).userMessage);
+          // The contract answers a seat conflict with this pair; any other status is an ordinary failure
+          if (error.status === 422 && error.code === 'BUSINESS_RULE_VIOLATION') {
+            // The API holds every seat or none: the client only has to pick again
+            this.selected.set(new Set());
+            this.attemptKey = null;
+            const reason = error.userMessage.trim().replace(/[.\s]+$/, '');
+            this.failure.set(`${reason.charAt(0).toUpperCase()}${reason.slice(1)}. No seat was held; pick other seats and try again.`);
+          } else {
+            this.failure.set(error.userMessage);
+          }
         },
       });
   }
