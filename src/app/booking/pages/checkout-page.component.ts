@@ -1,6 +1,6 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { asApiError } from '../../shell-contract';
 import { BookingApiService } from '../data/booking-api.service';
@@ -44,11 +44,16 @@ type View =
                 <p role="alert">This reservation has expired and its seats were released.</p>
               }
               @default {
-                <p>Hold expires at {{ b.expiresAt ? date(b.expiresAt) : '-' }}.</p>
-                @if (failure()) { <p role="alert">{{ failure() }}</p> }
-                <button type="button" [disabled]="pending()" [attr.aria-busy]="pending()" (click)="confirm()">
-                  {{ pending() ? 'Confirming...' : 'Confirm reservation' }}
-                </button>
+                @if (secondsLeft() === 0) {
+                  <p role="alert">The hold time is over and the seats will be released.</p>
+                  <button type="button" class="btn-secondary" (click)="chooseSeatsAgain(b.showtimeId)">Choose seats again</button>
+                } @else {
+                  <p role="timer">Time left to confirm: {{ clock(secondsLeft()) }}</p>
+                  @if (failure()) { <p role="alert">{{ failure() }}</p> }
+                  <button type="button" [disabled]="pending()" [attr.aria-busy]="pending()" (click)="confirm()">
+                    {{ pending() ? 'Confirming...' : 'Confirm reservation' }}
+                  </button>
+                }
               }
             }
           }
@@ -60,6 +65,8 @@ type View =
 export class CheckoutPageComponent {
   private readonly api = inject(BookingApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private id = '';
   private request?: Subscription;
   // One key per intention: retrying the same confirmation reuses it
@@ -68,10 +75,19 @@ export class CheckoutPageComponent {
   readonly view = signal<View>({ state: 'loading' });
   readonly pending = signal(false);
   readonly failure = signal<string | null>(null);
+  private readonly now = signal(Date.now());
+  /** Whole seconds until the hold expires; null when there is nothing to count down. */
+  readonly secondsLeft = computed(() => {
+    const b = this.booking();
+    if (b?.status !== 'HELD' || !b.expiresAt) return null;
+    return Math.max(0, Math.ceil((Date.parse(b.expiresAt) - this.now()) / 1000));
+  });
 
   constructor() {
+    const timer = setInterval(() => this.now.set(Date.now()), 1000);
+    this.destroyRef.onDestroy(() => clearInterval(timer));
     // The router reuses this component when only :id changes, so the id is read reactively
-    inject(ActivatedRoute).paramMap
+    this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         this.id = params.get('id') ?? '';
@@ -141,7 +157,12 @@ export class CheckoutPageComponent {
     return v.state === 'error' ? v.message : '';
   }
 
-  date(iso: string): string {
-    return new Date(iso).toLocaleString();
+  clock(seconds: number | null): string {
+    const total = seconds ?? 0;
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  }
+
+  chooseSeatsAgain(showtimeId: string): void {
+    void this.router.navigate(['../../showtime', showtimeId], { relativeTo: this.route });
   }
 }
