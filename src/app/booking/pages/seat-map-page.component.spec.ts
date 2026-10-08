@@ -112,15 +112,80 @@ describe('SeatMapPageComponent', () => {
     expect(router.navigate).toHaveBeenCalledOnceWith(['../../checkout', HOLD_ID], { relativeTo: route });
   });
 
-  it('shows the backend answer, keeps the selection and does not navigate when the hold is refused', () => {
-    api.hold.and.returnValue(throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'A seat is not available.')));
+  it('shows the seat conflict with the backend reason, says that nothing was held and clears the selection', () => {
+    api.hold.and.returnValue(throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'At least one requested seat is not available.')));
+    const root = render();
+    pick(root, 'A2', 'B3');
+
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    const alert = root.querySelector('[role="alert"]')?.textContent;
+    expect(alert).toContain('At least one requested seat is not available.');
+    expect(alert).toContain('No seat was held');
+    expect(root.querySelectorAll('button.seat.selected').length).toBe(0);
+    expect(holdButton(root).disabled).toBeTrue();
+    expect(api.hold).toHaveBeenCalledTimes(1);
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('joins the backend reason and the clarification as two sentences, whatever the case and the final period of the reason', () => {
+    // The wording the running API answers with: lower case and no final period
+    api.hold.and.returnValue(throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'one or more seats are not available')));
     const root = render();
     pick(root, 'A2');
 
     holdButton(root).click();
     fixture.detectChanges();
 
-    expect(root.querySelector('[role="alert"]')?.textContent).toContain('A seat is not available.');
+    expect(root.querySelector('[role="alert"]')?.textContent?.trim())
+      .toBe('One or more seats are not available. No seat was held; pick other seats and try again.');
+  });
+
+  it('lets the client pick other seats after a seat conflict, with a new Idempotency-Key', () => {
+    api.hold.and.returnValues(
+      throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'At least one requested seat is not available.')),
+      of(held()),
+    );
+    const root = render();
+    pick(root, 'A2');
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    pick(root, 'C4');
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    const calls = api.hold.calls.allArgs();
+    expect(calls[1][0].seatLabels).toEqual(['C4']);
+    expect(calls[1][1]).not.toBe(calls[0][1]);
+    expect(router.navigate).toHaveBeenCalledOnceWith(['../../checkout', HOLD_ID], { relativeTo: route });
+    expect(root.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('treats the conflict code with another HTTP status as an ordinary failure: nothing is cleared and nothing is claimed', () => {
+    api.hold.and.returnValue(throwError(() => apiError(400, 'BUSINESS_RULE_VIOLATION', 'The request is not valid.')));
+    const root = render();
+    pick(root, 'A2');
+
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    const alert = root.querySelector('[role="alert"]')?.textContent;
+    expect(alert).toContain('The request is not valid.');
+    expect(alert).not.toContain('No seat was held');
+    expect(seat(root, 'A2').classList).toContain('selected');
+  });
+
+  it('shows the backend answer and keeps the selection on any other failure', () => {
+    api.hold.and.returnValue(throwError(() => apiError(0, 'NETWORK_ERROR', 'The server cannot be reached.')));
+    const root = render();
+    pick(root, 'A2');
+
+    holdButton(root).click();
+    fixture.detectChanges();
+
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('The server cannot be reached.');
     expect(seat(root, 'A2').classList).toContain('selected');
     expect(router.navigate).not.toHaveBeenCalled();
   });
