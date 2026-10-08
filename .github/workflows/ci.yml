@@ -34,3 +34,17 @@ jobs:
 
       - name: Build container image
         run: docker build --file deploy/Dockerfile --tag csp-booking-portal:ci .
+
+      - name: Check the CORS rule of the image
+        run: |
+          # The shell loads this portal from another origin (ADR-026): the image must answer
+          # the allowed origin, stay silent for any other, and refuse to start without the rule.
+          ! docker run --rm csp-booking-portal:ci
+          docker run -d --name portal -p 8080:80 -e 'CORS_ALLOWED_ORIGIN_REGEX=^http://localhost:420[0-5]$' csp-booking-portal:ci
+          for i in $(seq 1 20); do curl -fs http://localhost:8080/health >/dev/null && break; sleep 1; done
+          module=$(docker exec portal sh -c 'cd /usr/share/nginx/html && ls *.js | head -1')
+          for file in remoteEntry.json "$module"; do
+            curl -fsD - -o /dev/null -H 'Origin: http://localhost:4200' "http://localhost:8080/$file" | grep -i '^access-control-allow-origin: http://localhost:4200'
+            ! curl -fsD - -o /dev/null -H 'Origin: http://evil.example' "http://localhost:8080/$file" | grep -i '^access-control-allow-origin'
+          done
+          docker rm -f portal
