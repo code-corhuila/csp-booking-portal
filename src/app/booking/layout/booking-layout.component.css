@@ -266,3 +266,24 @@
 .csp-booking .toast-info { border-left: 4px solid var(--color-brand-secondary); }
 .csp-booking .toast-success { border-left: 4px solid var(--seat-selected); }
 .csp-booking .toast-error { border-left: 4px solid var(--color-error); }
+
+/* Administration summary */
+.csp-booking .summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.csp-booking .summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.csp-booking .summary-label { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.csp-booking .summary-card strong { font-size: var(--font-size-xl); }
