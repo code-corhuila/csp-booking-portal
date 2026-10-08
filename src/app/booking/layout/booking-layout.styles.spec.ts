@@ -10,23 +10,38 @@ import { BookingLayoutComponent } from './booking-layout.component';
  */
 const SCOPE = /^\.csp-booking(?![\w-])/;
 
-/** The selectors of a rule, split on the top-level commas (a comma inside `:not(...)` does not split). */
+/**
+ * The selectors of a rule, split on the top-level commas: a comma inside `:not(...)` or inside a quoted
+ * attribute value (`[data-list="a,b"]`) does not split, and a parenthesis inside a quoted value does not count.
+ */
 function selectorsOf(selectorText: string): string[] {
   const selectors: string[] = [];
   let depth = 0;
+  let quote: string | null = null;
   let current = '';
   for (const char of selectorText) {
-    if (char === '(') depth++;
-    if (char === ')') depth--;
-    if (char === ',' && depth === 0) {
+    if (quote) {
+      if (char === quote) quote = null;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(') {
+      depth++;
+    } else if (char === ')') {
+      depth--;
+    } else if (char === ',' && depth === 0) {
       selectors.push(current.trim());
       current = '';
-    } else {
-      current += char;
+      continue;
     }
+    current += char;
   }
   selectors.push(current.trim());
   return selectors;
+}
+
+/** The selectors of the given rules that do not start with the scope class. */
+function unscopedSelectorsOf(rules: CSSStyleRule[]): string[] {
+  return rules.flatMap((rule) => selectorsOf(rule.selectorText)).filter((selector) => !SCOPE.test(selector));
 }
 
 function styleRulesOf(rules: CSSRuleList): CSSStyleRule[] {
@@ -73,9 +88,7 @@ describe('booking layout stylesheet', () => {
   });
 
   it('scopes every selector of every rule under .csp-booking', () => {
-    const unscoped = styleRulesOf(layoutStylesheet()!.cssRules)
-      .flatMap((rule) => selectorsOf(rule.selectorText))
-      .filter((selector) => !SCOPE.test(selector));
+    const unscoped = unscopedSelectorsOf(styleRulesOf(layoutStylesheet()!.cssRules));
 
     expect(unscoped).withContext('selectors outside .csp-booking').toEqual([]);
   });
@@ -97,6 +110,59 @@ describe('selectorsOf', () => {
 
   it('leaves a single selector as it is', () => {
     expect(selectorsOf('.csp-booking .seat:hover:not(:disabled)')).toEqual(['.csp-booking .seat:hover:not(:disabled)']);
+  });
+});
+
+describe('selectorsOf, quoted values', () => {
+  it('does not split on a comma inside a quoted attribute value', () => {
+    expect(selectorsOf('.csp-booking [data-list="a,b"], .x')).toEqual(['.csp-booking [data-list="a,b"]', '.x']);
+    expect(selectorsOf(".csp-booking [title='a,b']")).toEqual([".csp-booking [title='a,b']"]);
+  });
+
+  it('does not count a parenthesis inside a quoted value', () => {
+    expect(selectorsOf('.csp-booking [title="a)b"], .x')).toEqual(['.csp-booking [title="a)b"]', '.x']);
+  });
+});
+
+/** A stylesheet built on purpose, so that the guards are proven to fire without editing the real CSS. */
+function sheetOf(css: string): CSSStyleSheet {
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(css);
+  return sheet;
+}
+
+describe('the guards on a stylesheet that breaks the rule', () => {
+  it('reports every selector outside the scope, including the one of a selector list that starts well', () => {
+    const sheet = sheetOf(`
+      body { color: red; }
+      :root { --leak: 1; }
+      .csp-booking a, .seat { color: blue; }
+      .csp-bookingx h1 { color: green; }
+      @media (min-width: 1px) { html { color: red; } }
+      .csp-booking .ok { color: black; }
+    `);
+
+    expect(unscopedSelectorsOf(styleRulesOf(sheet.cssRules))).toEqual(['body', ':root', '.seat', '.csp-bookingx h1', 'html']);
+  });
+
+  it('reports nothing for a stylesheet that is entirely scoped', () => {
+    const sheet = sheetOf('.csp-booking { color: red; } .csp-booking a, .csp-booking:not(.a, .b) { color: blue; }');
+
+    expect(unscopedSelectorsOf(styleRulesOf(sheet.cssRules))).toEqual([]);
+  });
+
+  it('reports the at-rules that are global by nature, also inside @media', () => {
+    const sheet = sheetOf(`
+      .csp-booking a { color: red; }
+      @keyframes leak { from { opacity: 0; } to { opacity: 1; } }
+      @media (min-width: 1px) { @font-face { font-family: Leak; src: local(Arial); } .csp-booking b { color: red; } }
+    `);
+
+    const found = globalAtRulesOf(sheet.cssRules);
+
+    expect(found.length).toBe(2);
+    expect(found.some((text) => text.startsWith('@keyframes'))).toBeTrue();
+    expect(found.some((text) => text.startsWith('@font-face'))).toBeTrue();
   });
 });
 
