@@ -33,7 +33,7 @@ The shell mounts the remote under `/booking` (it loads `http://localhost:4202/re
 | `/booking` | "My bookings and holds": the reservations of the caller, with the four states of a view (loading, empty, error, data) |
 | `/booking/showtime/:id` | The seat map of a showtime: select seats and create the temporary hold; a seat taken by another client is explained and the client picks again |
 | `/booking/checkout/:id` | The summary of a hold with the countdown to its expiration, and the confirmation of the reservation |
-| `/booking/admin/reservations` | Reservations view for the `ADMIN` role, **with sample data** (see [What is missing](#what-is-missing)); anyone else is sent to `/movies` |
+| `/admin/reservations` | Reservations view for the `ADMIN` role, **with sample data** (see [What is missing](#what-is-missing)); anyone else is sent to `/movies`. It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address; the entry `./routes` holds only the customer screens |
 
 ## Build, test and run
 
