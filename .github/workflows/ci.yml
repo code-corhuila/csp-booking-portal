@@ -30,7 +30,7 @@ jobs:
         run: npm run lint --if-present
 
       - name: Test
-        run: npm test -- --browsers=ChromeHeadless
+        run: npm test -- --browsers=ChromeHeadless
 
       - name: Build container image
         run: docker build --file deploy/Dockerfile --tag csp-booking-portal:ci .
