@@ -19,4 +19,4 @@ services:
 networks:
   csp-frontend:
     external: true
-    name: csp-frontend
+    name: csp-frontend
