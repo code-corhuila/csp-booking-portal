@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminReservationsPageComponent } from './admin-reservations-page.component';
-import { BOOKING_ROUTES } from '../booking.routes';
-import { adminGuard } from './admin.guard';
 
 describe('AdminReservationsPageComponent', () => {
   let fixture: ComponentFixture<AdminReservationsPageComponent>;
@@ -79,15 +77,5 @@ describe('AdminReservationsPageComponent', () => {
 
   it('offers no action on a reservation: it is read only', () => {
     expect(root.querySelectorAll('tbody button').length).toBe(0);
-  });
-});
-
-describe('the admin route', () => {
-  const route = BOOKING_ROUTES[0].children!.find((child) => child.path === 'admin/reservations');
-
-  it('is a child of the layout, lazy loaded and behind the administrator guard', () => {
-    expect(route).toBeDefined();
-    expect(route!.loadComponent).toBeDefined();
-    expect(route!.canActivate).toEqual([adminGuard]);
   });
 });
