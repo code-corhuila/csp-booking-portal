@@ -1,20 +1,16 @@
 import { Routes } from '@angular/router';
 import { BookingLayoutComponent } from '../layout/booking-layout.component';
-import { adminGuard } from './admin.guard';
 
 /**
  * Administration area of Booking (role ADMIN), exposed as `./admin-routes`. It is a table of its own because
  * customer and staff screens are never declared in the same one (ADR-027). The shell mounts it at
- * /admin/reservations, as csp-docs/12-ux-ui/navigation-map.md documents.
- *
- * The guard is the portal's own until the shell mounts this entry behind its role guard (csp-front#15);
- * from then on it, and the token reading it uses, are deleted (csp-booking-portal#38).
+ * /admin/reservations behind `roleGuard('ADMIN')`, as csp-docs/12-ux-ui/navigation-map.md documents
+ * (csp-front#27), so the portal checks no role and reads no token. Run alone, the portal has no session.
  */
 export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     component: BookingLayoutComponent,
-    canActivate: [adminGuard],
     children: [
       {
         path: '',
