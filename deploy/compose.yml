@@ -6,6 +6,8 @@ services:
     container_name: csp-booking-portal
     ports:
       - "4202:80"
+    environment:
+      CORS_ALLOWED_ORIGIN_REGEX: ${CORS_ALLOWED_ORIGIN_REGEX:-^http://localhost:420[0-5]$$}
     networks:
       - csp-frontend
     healthcheck:
