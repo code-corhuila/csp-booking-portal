@@ -27,6 +27,11 @@ COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built assets from builder stage
 COPY --from=builder /app/dist/csp-booking-portal/browser /usr/share/nginx/html
 
+# The CORS rule is rendered from the container environment at startup (ADR-026)
+COPY deploy/runtime/cors-origin.conf.template /opt/csp-runtime/cors-origin.conf.template
+COPY deploy/runtime/40-render-cors.sh /docker-entrypoint.d/40-render-cors.sh
+RUN chmod +x /docker-entrypoint.d/40-render-cors.sh
+
 # Expose port
 EXPOSE 80
 
