@@ -1,0 +1,5 @@
+# Rendered at container start: only origins matching the regex may load this portal from another origin
+map $http_origin $cors_origin {
+    default "";
+    "~${CORS_ALLOWED_ORIGIN_REGEX}" $http_origin;
+}
