@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './admin/admin.guard';
 import { BookingApiService } from './data/booking-api.service';
 import { ResilientBookingApiService } from './data/resilient-booking-api.service';
 import { BookingLayoutComponent } from './layout/booking-layout.component';
@@ -21,6 +22,12 @@ export const BOOKING_ROUTES: Routes = [
       {
         path: 'checkout/:id',
         loadComponent: () => import('./pages/checkout-page.component').then(m => m.CheckoutPageComponent),
+      },
+      {
+        path: 'admin/reservations',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./admin/admin-reservations-page.component').then(m => m.AdminReservationsPageComponent),
       },
     ],
   },
