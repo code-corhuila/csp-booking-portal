@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+dist
+coverage
+.angular
+.env
+.env.*
+!.env.example
+npm-debug.log*
+Dockerfile*
+compose*.yml
+*.local

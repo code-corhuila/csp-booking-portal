@@ -4,6 +4,7 @@ module.exports = withNativeFederation({
   name: 'booking',
   exposes: {
     './routes': './src/app/booking/booking.routes.ts',
+    './admin-routes': './src/app/booking/admin/admin.routes.ts',
   },
   shared: {
     ...shareAll({ singleton: true, strictVersion: true, requiredVersion: 'auto' }),

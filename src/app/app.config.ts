@@ -1,6 +1,6 @@
 ﻿import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { BOOKING_ROUTES } from './booking/booking.routes';
+import { STANDALONE_ROUTES } from './standalone.routes';
 
 /**
  * Standalone runs only. Deliberately NO provideHttpClient(): inside the shell the
@@ -10,6 +10,6 @@ import { BOOKING_ROUTES } from './booking/booking.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
-    provideRouter(BOOKING_ROUTES)
+    provideRouter(STANDALONE_ROUTES)
   ]
 };
