@@ -84,6 +84,10 @@ token or the session: the shell holds them, and the API is the one that validate
 - After a failed confirmation the portal reads the reservation again before it offers a retry, because the answer may
   have been lost after the API applied the transition.
 - The API can only be reached through the gateway; see below.
+- **The boundary is checked by `npm run lint`** (so by the CI), not only written down: in `src/app/**`, outside the specs,
+  `eslint.config.js` rejects `provideHttpClient`, the HTTP modules, interceptors and backends of `@angular/common/http`,
+  `process.env`, `import.meta` and any reference to `GATEWAY_URL` or `gatewayUrl`. Injecting `HttpClient` and using
+  `HttpParams` stay allowed. Changing the rule is a decision to write down in the pull request that does it.
 
 ## Cut 2 data
 
