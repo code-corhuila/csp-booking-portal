@@ -143,4 +143,4 @@ export class BookingPageComponent {
   date(iso: string): string {
     return new Date(iso).toLocaleString();
   }
-}
+}
