@@ -87,11 +87,11 @@ describe('CheckoutPageComponent', () => {
     jasmine.clock().tick(10 * 60 * 1000);
     fixture.detectChanges();
 
-    expect(root.querySelector('[role="alert"]')?.textContent).toContain('hold time is over');
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('Se acabó el tiempo de retención');
     expect(root.querySelector('[role="timer"]')).toBeNull();
-    expect(Array.from(root.querySelectorAll('button')).some(b => b.textContent?.includes('Confirm'))).toBeFalse();
+    expect(Array.from(root.querySelectorAll('button')).some(b => b.textContent?.includes('Confirmar'))).toBeFalse();
 
-    click(root, 'Choose seats again');
+    click(root, 'Elegir asientos de nuevo');
 
     expect(router.navigate).toHaveBeenCalledOnceWith(['../../showtime', booking().showtimeId], { relativeTo: route });
   });
@@ -113,7 +113,7 @@ describe('CheckoutPageComponent', () => {
     expect(root.textContent).toContain('Dune');
     expect(root.textContent).toContain('A1, A2');
     expect(root.textContent).toContain('Room 1');
-    expect(root.querySelector('button')?.textContent).toContain('Confirm');
+    expect(root.querySelector('button')?.textContent).toContain('Confirmar');
   });
 
   it('confirms the reservation and shows the success screen', () => {
@@ -121,10 +121,10 @@ describe('CheckoutPageComponent', () => {
     api.confirm.and.returnValue(of(booking({ status: 'CONFIRMED', expiresAt: null, confirmedAt: '2026-10-06T20:05:00Z' })));
     const root = render();
 
-    click(root, 'Confirm');
+    click(root, 'Confirmar');
 
     expect(api.confirm).toHaveBeenCalledOnceWith(ID, jasmine.stringMatching(/^[0-9a-f-]{36}$/));
-    expect(root.querySelector('[role="status"].toast-success')?.textContent).toContain('Reservation confirmed');
+    expect(root.querySelector('[role="status"].toast-success')?.textContent).toContain('Reserva confirmada');
     expect(root.querySelector('button')).toBeNull();
   });
 
@@ -133,10 +133,10 @@ describe('CheckoutPageComponent', () => {
     api.confirm.and.returnValue(throwError(() => apiError(422, 'INVALID_STATUS_TRANSITION', 'The reservation has expired.')));
     const root = render();
 
-    click(root, 'Confirm');
+    click(root, 'Confirmar');
 
     expect(root.querySelector('[role="alert"]')?.textContent).toContain('The reservation has expired.');
-    expect(root.querySelector('button')?.textContent).toContain('Confirm');
+    expect(root.querySelector('button')?.textContent).toContain('Confirmar');
   });
 
   it('reuses the same Idempotency-Key when the same confirmation is retried', () => {
@@ -145,8 +145,8 @@ describe('CheckoutPageComponent', () => {
     api.confirm.and.returnValue(failing);
     const root = render();
 
-    click(root, 'Confirm');
-    click(root, 'Confirm');
+    click(root, 'Confirmar');
+    click(root, 'Confirmar');
 
     const keys = api.confirm.calls.allArgs().map(args => args[1]);
     expect(keys.length).toBe(2);
@@ -161,10 +161,10 @@ describe('CheckoutPageComponent', () => {
     api.confirm.and.returnValue(throwError(() => apiError(0, 'NETWORK_ERROR', 'The server cannot be reached.')));
     const root = render();
 
-    click(root, 'Confirm');
+    click(root, 'Confirmar');
 
     expect(api.getReservation).toHaveBeenCalledTimes(2);
-    expect(root.querySelector('[role="status"].toast-success')?.textContent).toContain('Reservation confirmed');
+    expect(root.querySelector('[role="status"].toast-success')?.textContent).toContain('Reserva confirmada');
     expect(root.querySelector('button')).toBeNull();
   });
 
@@ -177,11 +177,11 @@ describe('CheckoutPageComponent', () => {
     api.confirm.and.returnValue(throwError(() => apiError(0, 'NETWORK_ERROR', 'The server cannot be reached.')));
     const root = render();
 
-    click(root, 'Confirm');
-    click(root, 'Confirm');
+    click(root, 'Confirmar');
+    click(root, 'Confirmar');
 
     expect(root.querySelector('[role="alert"]')?.textContent).toContain('The server cannot be reached.');
-    expect(root.querySelector('button')?.textContent).toContain('Confirm');
+    expect(root.querySelector('button')?.textContent).toContain('Confirmar');
     const keys = api.confirm.calls.allArgs().map(args => args[1]);
     expect(keys[0]).toBe(keys[1]);
   });
@@ -191,9 +191,9 @@ describe('CheckoutPageComponent', () => {
     api.confirm.and.returnValue(throwError(() => apiError(422, 'INVALID_STATUS_TRANSITION', 'The reservation has expired.')));
     const root = render();
 
-    click(root, 'Confirm');
+    click(root, 'Confirmar');
 
-    expect(root.textContent).toContain('This reservation has expired');
+    expect(root.textContent).toContain('Esta reserva venció');
     expect(root.querySelector('button')).toBeNull();
   });
 
@@ -215,7 +215,7 @@ describe('CheckoutPageComponent', () => {
 
     const root = render();
 
-    expect(root.textContent).toContain('expired');
+    expect(root.textContent).toContain('venció');
     expect(root.querySelector('button')).toBeNull();
   });
 
@@ -225,6 +225,6 @@ describe('CheckoutPageComponent', () => {
     const root = render();
 
     expect(root.querySelector('[role="alert"]')?.textContent).toContain('It does not exist');
-    expect(root.querySelector('button')?.textContent).toContain('Try again');
+    expect(root.querySelector('button')?.textContent).toContain('Reintentar');
   });
 });
