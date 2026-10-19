@@ -8,6 +8,13 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Fixed
+
+- The healthcheck of the container, in the `Dockerfile` and in `compose.yml`, calls `127.0.0.1` instead of `localhost`, which
+  resolves to `::1` while nginx listens on IPv4 only; the portal no longer shows `unhealthy` while it serves traffic. It is not
+  in `2.0.0`: it goes out with the next release. ([#54](https://github.com/code-corhuila/csp-booking-portal/issues/54),
+  [#55](https://github.com/code-corhuila/csp-booking-portal/pull/55))
+
 ## [2.0.0] - 2026-10-08
 
 MVP 2 (Cut 2). Story HU-FE-BOOKING-001 ([#10](https://github.com/code-corhuila/csp-booking-portal/issues/10)): the client picks seats
