@@ -60,7 +60,7 @@ describe('SeatMapPageComponent', () => {
     fixture.detectChanges();
   };
   const holdButton = (root: HTMLElement) =>
-    Array.from(root.querySelectorAll<HTMLButtonElement>('button:not(.seat)')).find(b => b.textContent?.includes('Hold'))!;
+    Array.from(root.querySelectorAll<HTMLButtonElement>('button:not(.seat)')).find(b => b.textContent?.includes('Retener'))!;
 
   beforeEach(() => {
     api = jasmine.createSpyObj<BookingApiService>('BookingApiService', ['hold']);
@@ -112,7 +112,7 @@ describe('SeatMapPageComponent', () => {
     expect(router.navigate).toHaveBeenCalledOnceWith(['../../checkout', HOLD_ID], { relativeTo: route });
   });
 
-  it('shows the seat conflict with the backend reason, says that nothing was held and clears the selection', () => {
+  it('shows the seat conflict in Spanish, says that nothing was held and clears the selection', () => {
     api.hold.and.returnValue(throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'At least one requested seat is not available.')));
     const root = render();
     pick(root, 'A2', 'B3');
@@ -121,16 +121,16 @@ describe('SeatMapPageComponent', () => {
     fixture.detectChanges();
 
     const alert = root.querySelector('[role="alert"]')?.textContent;
-    expect(alert).toContain('At least one requested seat is not available.');
-    expect(alert).toContain('No seat was held');
+    expect(alert).toContain('Uno o más asientos ya no están disponibles.');
+    expect(alert).toContain('No se retuvo ningún asiento');
     expect(root.querySelectorAll('button.seat.selected').length).toBe(0);
     expect(holdButton(root).disabled).toBeTrue();
     expect(api.hold).toHaveBeenCalledTimes(1);
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('joins the backend reason and the clarification as two sentences, whatever the case and the final period of the reason', () => {
-    // The wording the running API answers with: lower case and no final period
+  it('says the conflict with its own Spanish sentence, whatever the wording and the language of the backend reason', () => {
+    // The wording the running API answers with: English, lower case and no final period
     api.hold.and.returnValue(throwError(() => apiError(422, 'BUSINESS_RULE_VIOLATION', 'one or more seats are not available')));
     const root = render();
     pick(root, 'A2');
@@ -139,7 +139,7 @@ describe('SeatMapPageComponent', () => {
     fixture.detectChanges();
 
     expect(root.querySelector('[role="alert"]')?.textContent?.trim())
-      .toBe('One or more seats are not available. No seat was held; pick other seats and try again.');
+      .toBe('Uno o más asientos ya no están disponibles. No se retuvo ningún asiento; elige otros e inténtalo de nuevo.');
   });
 
   it('lets the client pick other seats after a seat conflict, with a new Idempotency-Key', () => {
@@ -173,7 +173,7 @@ describe('SeatMapPageComponent', () => {
 
     const alert = root.querySelector('[role="alert"]')?.textContent;
     expect(alert).toContain('The request is not valid.');
-    expect(alert).not.toContain('No seat was held');
+    expect(alert).not.toContain('No se retuvo ningún asiento');
     expect(seat(root, 'A2').classList).toContain('selected');
   });
 
@@ -210,7 +210,7 @@ describe('SeatMapPageComponent', () => {
   it('shows a not-found message for a showtime that does not exist', () => {
     const root = render('00000000-0000-4000-8000-000000000000');
 
-    expect(root.querySelector('[role="alert"]')?.textContent).toContain('does not exist');
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('no existe');
     expect(root.querySelectorAll('button.seat').length).toBe(0);
   });
 
