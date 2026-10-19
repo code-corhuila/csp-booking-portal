@@ -43,7 +43,7 @@ Requirements: Node 22.12 or later (24 works) and a Chrome for the tests.
 npm ci                                      # install from the lockfile
 npm run build                               # production build in dist/csp-booking-portal
 npm run lint
-npm test -- --browsers=ChromeHeadless       # 90 specs, one run
+npm test -- --browsers=ChromeHeadless       # every spec, one run
 npm start                                   # development server and remote on http://localhost:4202
 ```
 
@@ -93,6 +93,16 @@ token or the session: the shell holds them, and the API is the one that validate
 - **The list falls back to a burned-in sample** (`sample-reservations.ts`) **only** when the API does not answer or
   answers a server error, and a banner says so. A real answer, including a refusal such as `401` or `422`, is never
   replaced. Hold and confirmation are never simulated.
+
+## Language
+
+Everything a person reads is in **Spanish** (the dates in `es-CO`); identifiers, comments and the code stay in English
+(`#56`). The Spanish words of a status (`Retención activa`, `Confirmada`, `Vencida`), the sentence of a seat conflict and the
+date helpers live in `src/app/booking/model/labels.ts`, so a screen never prints an API value such as `HELD`. The text of a
+failed request is the `userMessage` of the shell (Spanish). The exception is a `409` or `422`, for which the shell shows the
+message of the API as it is, in English today: the seat conflict is answered by the portal with its own Spanish sentence, and
+any other message of that kind is shown unchanged until the API translates it. The synthetic showtimes keep the names of
+`csp-catalog-portal` (`Room 1`, the titles), because both portals must carry the same data.
 
 ## Look and scope
 

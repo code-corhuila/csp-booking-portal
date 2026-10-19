@@ -29,7 +29,7 @@ describe('BookingLayoutComponent', () => {
 
     demo.active.set(true);
     fixture.detectChanges();
-    expect(root.querySelector('.demo-notice[role="status"]')?.textContent).toContain('sample data');
+    expect(root.querySelector('.demo-notice[role="status"]')?.textContent).toContain('datos de ejemplo');
 
     demo.active.set(false);
     fixture.detectChanges();
