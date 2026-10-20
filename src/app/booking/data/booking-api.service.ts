@@ -39,4 +39,4 @@ export class BookingApiService {
     if (createdBefore) params = params.set('createdBefore', createdBefore);
     return this.http.get<Page<Booking>>(`${this.base}/reservations`, { params });
   }
-}
+}
