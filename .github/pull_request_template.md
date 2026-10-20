@@ -19,4 +19,4 @@ Only for `qa` or `main`: the list of re-applied commits, each with its line `(ch
 
 - [ ] No secrets in code
 - [ ] No schema changes outside the corresponding `-db`
-- [ ] Contract respected (OpenAPI / events)
+- [ ] Contract respected (OpenAPI / events)
