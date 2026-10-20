@@ -6,6 +6,7 @@ import { BookingFormComponent } from '../components/booking-form.component';
 import { BookingApiService } from '../data/booking-api.service';
 import { formatCents } from '../model/money';
 import { Booking, BookingStatus, Page } from '../model/booking';
+import { STATUS_LABEL, formatDateTime } from '../model/labels';
 
 const LIMIT = 20;
 
@@ -22,41 +23,41 @@ type View =
   imports: [BookingFormComponent],
   template: `
     <section aria-labelledby="bookings-title">
-      <h1 id="bookings-title">My bookings and holds</h1>
+      <h1 id="bookings-title">Mis reservas y retenciones</h1>
 
       <app-booking-form (holdCreated)="onHoldCreated($event)" />
       @if (notice()) { <p role="status">{{ notice() }}</p> }
 
-      <label for="status-filter">Status</label>
+      <label for="status-filter">Estado</label>
       <select id="status-filter" [value]="status()" (change)="filter($any($event.target).value)">
-        <option value="">All</option>
-        <option value="HELD">Active hold</option>
-        <option value="CONFIRMED">Confirmed</option>
-        <option value="EXPIRED">Expired</option>
+        <option value="">Todos</option>
+        <option value="HELD">{{ label('HELD') }}</option>
+        <option value="CONFIRMED">{{ label('CONFIRMED') }}</option>
+        <option value="EXPIRED">{{ label('EXPIRED') }}</option>
       </select>
 
       @switch (view().state) {
-        @case ('loading') { <p role="status">Loading bookings...</p> }
+        @case ('loading') { <p role="status">Cargando tus reservas…</p> }
         @case ('error') {
           <div role="alert">
             <p>{{ errorMessage() }}</p>
-            <button type="button" (click)="load()">Try again</button>
+            <button type="button" (click)="load()">Reintentar</button>
           </div>
         }
-        @case ('empty') { <p>You have no bookings yet.</p> }
+        @case ('empty') { <p>Aún no tienes reservas.</p> }
         @case ('ready') {
           <table>
-            <caption>Bookings, newest first</caption>
+            <caption>Tus reservas, de la más reciente a la más antigua</caption>
             <thead>
               <tr>
-                <th scope="col">Booking</th>
-                <th scope="col">Showtime</th>
-                <th scope="col">Seats</th>
-                <th scope="col">Movie</th>
-                <th scope="col">Room</th>
-                <th scope="col">Status</th>
-                <th scope="col">Created</th>
-                <th scope="col">Confirmed</th>
+                <th scope="col">Reserva</th>
+                <th scope="col">Función</th>
+                <th scope="col">Asientos</th>
+                <th scope="col">Película</th>
+                <th scope="col">Sala</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Creada</th>
+                <th scope="col">Confirmada</th>
               </tr>
             </thead>
             <tbody>
@@ -67,17 +68,17 @@ type View =
                   <td>{{ b.seatLabels.join(', ') }}</td>
                   <td>{{ b.movieTitleSnapshot }}</td>
                   <td>{{ b.roomNameSnapshot }}</td>
-                  <td>{{ b.status }}</td>
+                  <td>{{ label(b.status) }}</td>
                   <td>{{ date(b.createdAt) }}</td>
-                  <td>{{ b.confirmedAt ? date(b.confirmedAt) : 'Not confirmed' }}</td>
+                  <td>{{ b.confirmedAt ? date(b.confirmedAt) : 'Sin confirmar' }}</td>
                 </tr>
               }
             </tbody>
           </table>
-          <nav aria-label="Pages">
-            <button type="button" [disabled]="page() <= 1" (click)="go(page() - 1)">Previous</button>
-            <span>Page {{ page() }} of {{ totalPages() }}</span>
-            <button type="button" [disabled]="page() >= totalPages()" (click)="go(page() + 1)">Next</button>
+          <nav aria-label="Páginas">
+            <button type="button" [disabled]="page() <= 1" (click)="go(page() - 1)">Anterior</button>
+            <span>Página {{ page() }} de {{ totalPages() }}</span>
+            <button type="button" [disabled]="page() >= totalPages()" (click)="go(page() + 1)">Siguiente</button>
           </nav>
         }
       }
@@ -121,7 +122,7 @@ export class BookingPageComponent {
   }
 
   onHoldCreated(id: string): void {
-    this.notice.set(`Hold ${id} created.`);
+    this.notice.set(`Retención ${id} creada.`);
     this.load();
   }
 
@@ -140,7 +141,11 @@ export class BookingPageComponent {
     return v.state === 'error' ? v.message : '';
   }
 
+  label(status: BookingStatus): string {
+    return STATUS_LABEL[status];
+  }
+
   date(iso: string): string {
-    return new Date(iso).toLocaleString();
+    return formatDateTime(iso);
   }
 }

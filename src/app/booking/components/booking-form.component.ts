@@ -13,30 +13,30 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate aria-labelledby="new-hold-title">
-      <h2 id="new-hold-title">Create hold</h2>
+      <h2 id="new-hold-title">Crear retención</h2>
 
-      <label for="showtimeId">Showtime ID</label>
+      <label for="showtimeId">ID de la función</label>
       <input id="showtimeId" formControlName="showtimeId" autocomplete="off"
              [attr.aria-invalid]="shows('showtimeId')" [attr.aria-describedby]="shows('showtimeId') ? 'showtimeId-error' : null" />
       @if (shows('showtimeId')) {
-        <p id="showtimeId-error">{{ serverError('showtimeId') ?? 'Enter the showtime id (a UUID).' }}</p>
+        <p id="showtimeId-error">{{ serverError('showtimeId') ?? 'Escribe el ID de la función (un UUID).' }}</p>
       }
 
-      <label for="seatLabels">Seat labels (comma-separated)</label>
+      <label for="seatLabels">Asientos (separados por comas)</label>
       <input id="seatLabels" formControlName="seatLabels" autocomplete="off"
              [attr.aria-invalid]="shows('seatLabels')" [attr.aria-describedby]="shows('seatLabels') ? 'seatLabels-error' : null" />
       @if (shows('seatLabels')) {
-        <p id="seatLabels-error">{{ serverError('seatLabels') ?? 'Enter one or more seat labels separated by commas.' }}</p>
+        <p id="seatLabels-error">{{ serverError('seatLabels') ?? 'Escribe uno o más asientos separados por comas.' }}</p>
       }
 
-      <label for="movieTitle">Movie title</label>
+      <label for="movieTitle">Título de la película</label>
       <input id="movieTitle" formControlName="movieTitle" autocomplete="off"
              [attr.aria-invalid]="shows('movieTitle')" [attr.aria-describedby]="shows('movieTitle') ? 'movieTitle-error' : null" />
       @if (shows('movieTitle')) {
         <p id="movieTitle-error">{{ serverError('movieTitle') }}</p>
       }
 
-      <label for="roomName">Room name</label>
+      <label for="roomName">Nombre de la sala</label>
       <input id="roomName" formControlName="roomName" autocomplete="off"
              [attr.aria-invalid]="shows('roomName')" [attr.aria-describedby]="shows('roomName') ? 'roomName-error' : null" />
       @if (shows('roomName')) {
@@ -44,7 +44,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       }
 
       <button type="submit" [disabled]="pending()" [attr.aria-busy]="pending()">
-        {{ pending() ? 'Creating hold...' : 'Create hold' }}
+        {{ pending() ? 'Creando retención…' : 'Crear retención' }}
       </button>
       @if (failure()) { <p role="alert">{{ failure() }}</p> }
     </form>
