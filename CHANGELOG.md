@@ -8,12 +8,26 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-20
+
+Fixes and maintenance of the portal on top of `2.0.0`; no change of the contract with `csp-booking-api`.
+
 ### Fixed
 
 - The healthcheck of the container, in the `Dockerfile` and in `compose.yml`, calls `127.0.0.1` instead of `localhost`, which
-  resolves to `::1` while nginx listens on IPv4 only; the portal no longer shows `unhealthy` while it serves traffic. It is not
-  in `2.0.0`: it goes out with the next release. ([#54](https://github.com/code-corhuila/csp-booking-portal/issues/54),
+  resolves to `::1` while nginx listens on IPv4 only; the portal no longer shows `unhealthy` while it serves traffic. ([#54](https://github.com/code-corhuila/csp-booking-portal/issues/54),
   [#55](https://github.com/code-corhuila/csp-booking-portal/pull/55))
+
+### Changed
+
+- User-facing text of the main screen, the hold form, the checkout, the seat map and the administration view is in Spanish.
+  ([#59](https://github.com/code-corhuila/csp-booking-portal/pull/59), [#62](https://github.com/code-corhuila/csp-booking-portal/pull/62))
+- Lint rules keep the HTTP client and the gateway URL in the shell. ([#58](https://github.com/code-corhuila/csp-booking-portal/pull/58))
+- Text files are kept in LF on every machine (`.gitattributes`) and the files that were in CRLF were normalized to LF, with no
+  change of content. ([#60](https://github.com/code-corhuila/csp-booking-portal/pull/60), [#61](https://github.com/code-corhuila/csp-booking-portal/pull/61),
+  [#68](https://github.com/code-corhuila/csp-booking-portal/pull/68), [#69](https://github.com/code-corhuila/csp-booking-portal/pull/69),
+  [#70](https://github.com/code-corhuila/csp-booking-portal/pull/70), [#71](https://github.com/code-corhuila/csp-booking-portal/pull/71),
+  [#76](https://github.com/code-corhuila/csp-booking-portal/pull/76))
 
 ## [2.0.0] - 2026-10-08
 
