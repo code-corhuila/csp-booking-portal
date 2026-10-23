@@ -31,7 +31,7 @@ The shell mounts the remote under `/booking` (it loads `http://localhost:4202/re
 | Route | What it does |
 |---|---|
 | `/booking` | "My bookings and holds": the reservations of the caller, with the four states of a view (loading, empty, error, data) |
-| `/booking/showtime/:id` | The seat map of a showtime: select seats and create the temporary hold; a seat taken by another client is explained and the client picks again |
+| `/booking/showtime/:id` | The real seat map of a showtime (ADR-046): taken seats are disabled, select seats and create the temporary hold; a seat taken meanwhile is explained, the map is read again and the client picks again. A failure shows a retry, never a synthetic room |
 | `/booking/checkout/:id` | The summary of a hold with the countdown to its expiration, and the confirmation of the reservation |
 | `/admin/reservations` | Reservations view for the `ADMIN` role, **with sample data** (see [What is missing](#what-is-missing)). It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
 
@@ -91,9 +91,11 @@ token or the session: the shell holds them, and the API is the one that validate
 
 ## Cut 2 data
 
-- **Showtimes are synthetic.** Catalog has no backend yet, so `src/app/booking/data/synthetic-showtimes.ts` mirrors the
-  showtimes of `csp-catalog-portal` (same ids, titles, room and seats `A1` to `F8`). The title and the room travel with the
-  hold request, which is what the API requires while it runs without Catalog (`totalAmount` is `0`).
+- **The list of showtimes is synthetic.** `src/app/booking/data/synthetic-showtimes.ts` mirrors the showtimes of
+  `csp-catalog-portal` (same ids, titles and room) and only feeds the page that lists them. The seat map is not synthetic any more:
+  it comes from `GET /showtimes/{showtimeId}/seats` (ADR-046), so a synthetic id that Catalog does not have shows that the
+  function does not exist. The title and the room of the map travel with the hold request, which is what the API requires while it
+  runs without Catalog (`totalAmount` is `0`).
 - **The list falls back to a burned-in sample** (`sample-reservations.ts`) **only** when the API does not answer or
   answers a server error, and a banner says so. A real answer, including a refusal such as `401` or `422`, is never
   replaced. Hold and confirmation are never simulated.
