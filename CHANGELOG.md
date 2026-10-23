@@ -10,7 +10,7 @@ and is tagged `v<version>` once it is merged.
 
 ## [3.0.0] - 2026-10-20
 
-Fixes and maintenance of the portal on top of `2.0.0`; no change of the contract with `csp-booking-api`.
+Fixes and maintenance of the portal on top of `2.0.0`, and the real seat map, which reads the route `GET /showtimes/{showtimeId}/seats` of contract 3.3.0 of `csp-booking-api`; the other calls do not change.
 
 ### Fixed
 
@@ -20,6 +20,10 @@ Fixes and maintenance of the portal on top of `2.0.0`; no change of the contract
 
 ### Changed
 
+- The seat map of `/booking/showtime/:id` reads `GET /showtimes/{showtimeId}/seats` of `csp-booking-api` 3.3.0 (ADR-046) and draws the real room by row, with
+  the held and the confirmed seats disabled; a seat without row or number goes in one unnamed row. There is no synthetic fallback: `404` says the
+  showtime does not exist and any other failure shows the message with a retry. After a seat conflict the map is read again. The hold takes the
+  title and the room from the map ([csp-booking-portal#79](https://github.com/code-corhuila/csp-booking-portal/issues/79), HU-CATALOG-005).
 - User-facing text of the main screen, the hold form, the checkout, the seat map and the administration view is in Spanish.
   ([#59](https://github.com/code-corhuila/csp-booking-portal/pull/59), [#62](https://github.com/code-corhuila/csp-booking-portal/pull/62))
 - Lint rules keep the HTTP client and the gateway URL in the shell. ([#58](https://github.com/code-corhuila/csp-booking-portal/pull/58))
