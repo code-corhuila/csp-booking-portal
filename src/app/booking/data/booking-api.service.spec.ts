@@ -32,6 +32,14 @@ describe('BookingApiService', () => {
     request.flush({ id: 'reservation-1' });
   });
 
+  it('reads the seat map of a showtime with an encoded id and no body', () => {
+    service.getSeatMap('showtime/1').subscribe();
+
+    const request = http.expectOne('/api/v1/booking/showtimes/showtime%2F1/seats');
+    expect(request.request.method).toBe('GET');
+    request.flush({ showtimeId: 'showtime/1', seats: [] });
+  });
+
   it('sends confirmation with its idempotency key and no body', () => {
     service.confirm('reservation-1', 'confirm-key').subscribe();
 

@@ -1,15 +1,9 @@
-import { DatePipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { BookingStatus } from '../model/booking';
+import { STATUS_LABEL, formatDateTimeLong, formatTime } from '../model/labels';
 import { adminReservationsPage, sampleAdminReservations, statusCounts } from '../data/sample-admin-reservations';
 
 const LIMIT = 10;
-
-const STATUS_LABEL: Record<BookingStatus, string> = {
-  HELD: 'Active hold',
-  CONFIRMED: 'Confirmed',
-  EXPIRED: 'Expired',
-};
 
 /**
  * Administration view of the reservations of every user, read only (12-ux-ui/wireframes.md, section 5).
@@ -18,15 +12,14 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
 @Component({
   selector: 'app-admin-reservations-page',
   standalone: true,
-  imports: [DatePipe],
   template: `
     <section aria-labelledby="admin-title">
-      <h1 id="admin-title">Reservations</h1>
+      <h1 id="admin-title">Reservas</h1>
       <p class="demo-notice" role="status">
-        Showing sample data: the Booking service cannot yet list the reservations of every user.
+        Mostrando datos de ejemplo: el servicio de Reservas todavía no puede listar las reservas de todos los usuarios.
       </p>
 
-      <ul class="summary" aria-label="Reservations by status">
+      <ul class="summary" aria-label="Reservas por estado">
         @for (entry of summary(); track entry.status) {
           <li class="summary-card">
             <span class="summary-label">{{ entry.label }}</span>
@@ -35,28 +28,28 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
         }
       </ul>
 
-      <label for="admin-status-filter">Status</label>
+      <label for="admin-status-filter">Estado</label>
       <select id="admin-status-filter" [value]="status()" (change)="filter($any($event.target).value)">
-        <option value="">All</option>
+        <option value="">Todos</option>
         @for (entry of summary(); track entry.status) {
           <option [value]="entry.status">{{ entry.label }}</option>
         }
       </select>
 
       @if (current().data.length === 0) {
-        <p>No reservations match this status.</p>
+        <p>Ninguna reserva coincide con este estado.</p>
       } @else {
         <table>
-          <caption>Reservations of all users, newest first</caption>
+          <caption>Reservas de todos los usuarios, de la más reciente a la más antigua</caption>
           <thead>
             <tr>
-              <th scope="col">Status</th>
-              <th scope="col">Reservation</th>
-              <th scope="col">Movie</th>
-              <th scope="col">Room</th>
-              <th scope="col">Seats</th>
-              <th scope="col">Created</th>
-              <th scope="col">Expires</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Reserva</th>
+              <th scope="col">Película</th>
+              <th scope="col">Sala</th>
+              <th scope="col">Asientos</th>
+              <th scope="col">Creada</th>
+              <th scope="col">Vence</th>
             </tr>
           </thead>
           <tbody>
@@ -67,16 +60,16 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
                 <td>{{ b.movieTitleSnapshot }}</td>
                 <td>{{ b.roomNameSnapshot }}</td>
                 <td>{{ b.seatLabels.join(', ') }}</td>
-                <td>{{ b.createdAt | date: 'medium' }}</td>
-                <td>{{ b.expiresAt ? (b.expiresAt | date: 'shortTime') : 'Not applicable' }}</td>
+                <td>{{ createdAt(b.createdAt) }}</td>
+                <td>{{ b.expiresAt ? expiresAt(b.expiresAt) : 'No aplica' }}</td>
               </tr>
             }
           </tbody>
         </table>
-        <nav aria-label="Pages">
-          <button type="button" [disabled]="page() <= 1" (click)="go(page() - 1)">Previous</button>
-          <span>Page {{ page() }} of {{ current().meta.totalPages }}</span>
-          <button type="button" [disabled]="page() >= current().meta.totalPages" (click)="go(page() + 1)">Next</button>
+        <nav aria-label="Páginas">
+          <button type="button" [disabled]="page() <= 1" (click)="go(page() - 1)">Anterior</button>
+          <span>Página {{ page() }} de {{ current().meta.totalPages }}</span>
+          <button type="button" [disabled]="page() >= current().meta.totalPages" (click)="go(page() + 1)">Siguiente</button>
         </nav>
       }
     </section>
@@ -103,6 +96,14 @@ export class AdminReservationsPageComponent {
 
   protected label(status: BookingStatus): string {
     return STATUS_LABEL[status];
+  }
+
+  protected createdAt(iso: string): string {
+    return formatDateTimeLong(iso);
+  }
+
+  protected expiresAt(iso: string): string {
+    return formatTime(iso);
   }
 
   protected filter(value: BookingStatus | ''): void {

@@ -18,7 +18,7 @@ import { DemoModeService } from '../data/demo-mode.service';
     <div class="csp-booking">
       @if (demo.active()) {
         <p class="demo-notice" role="status">
-          You are looking at sample data: the Booking service did not answer, so the reservations below are an example.
+          Estás viendo datos de ejemplo: el servicio de Reservas no respondió, así que las reservas de abajo son un ejemplo.
         </p>
       }
       <router-outlet />

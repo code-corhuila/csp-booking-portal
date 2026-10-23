@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { asApiError } from '../../shell-contract';
 import { BookingApiService } from '../data/booking-api.service';
 import { Booking } from '../model/booking';
+import { STATUS_LABEL } from '../model/labels';
 
 type View =
   | { state: 'loading' }
@@ -17,41 +18,41 @@ type View =
   standalone: true,
   template: `
     <section aria-labelledby="checkout-title">
-      <h1 id="checkout-title">Checkout</h1>
+      <h1 id="checkout-title">Confirma tu reserva</h1>
 
       @switch (view().state) {
-        @case ('loading') { <p role="status">Loading reservation...</p> }
+        @case ('loading') { <p role="status">Cargando la reserva…</p> }
         @case ('error') {
           <div role="alert">
             <p>{{ errorMessage() }}</p>
-            <button type="button" (click)="load()">Try again</button>
+            <button type="button" (click)="load()">Reintentar</button>
           </div>
         }
         @case ('ready') {
           @if (booking(); as b) {
             <dl>
-              <dt>Movie</dt><dd>{{ b.movieTitleSnapshot }}</dd>
-              <dt>Room</dt><dd>{{ b.roomNameSnapshot }}</dd>
-              <dt>Seats</dt><dd>{{ b.seatLabels.join(', ') }}</dd>
-              <dt>Status</dt><dd>{{ b.status }}</dd>
+              <dt>Película</dt><dd>{{ b.movieTitleSnapshot }}</dd>
+              <dt>Sala</dt><dd>{{ b.roomNameSnapshot }}</dd>
+              <dt>Asientos</dt><dd>{{ b.seatLabels.join(', ') }}</dd>
+              <dt>Estado</dt><dd>{{ statusLabel(b.status) }}</dd>
             </dl>
 
             @switch (b.status) {
               @case ('CONFIRMED') {
-                <p class="toast toast-success" role="status">Reservation confirmed. Your seats are booked.</p>
+                <p class="toast toast-success" role="status">Reserva confirmada. Tus asientos quedaron reservados.</p>
               }
               @case ('EXPIRED') {
-                <p role="alert">This reservation has expired and its seats were released.</p>
+                <p role="alert">Esta reserva venció y sus asientos fueron liberados.</p>
               }
               @default {
                 @if (secondsLeft() === 0) {
-                  <p role="alert">The hold time is over and the seats will be released.</p>
-                  <button type="button" class="btn-secondary" (click)="chooseSeatsAgain(b.showtimeId)">Choose seats again</button>
+                  <p role="alert">Se acabó el tiempo de retención y los asientos se liberarán.</p>
+                  <button type="button" class="btn-secondary" (click)="chooseSeatsAgain(b.showtimeId)">Elegir asientos de nuevo</button>
                 } @else {
-                  <p role="timer">Time left to confirm: {{ clock(secondsLeft()) }}</p>
+                  <p role="timer">Tiempo para confirmar: {{ clock(secondsLeft()) }}</p>
                   @if (failure()) { <p role="alert">{{ failure() }}</p> }
                   <button type="button" [disabled]="pending()" [attr.aria-busy]="pending()" (click)="confirm()">
-                    {{ pending() ? 'Confirming...' : 'Confirm reservation' }}
+                    {{ pending() ? 'Confirmando…' : 'Confirmar reserva' }}
                   </button>
                 }
               }
@@ -155,6 +156,10 @@ export class CheckoutPageComponent {
   errorMessage(): string {
     const v = this.view();
     return v.state === 'error' ? v.message : '';
+  }
+
+  statusLabel(status: Booking['status']): string {
+    return STATUS_LABEL[status];
   }
 
   clock(seconds: number | null): string {

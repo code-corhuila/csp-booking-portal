@@ -27,7 +27,7 @@ describe('AdminReservationsPageComponent', () => {
   afterEach(() => jasmine.clock().uninstall());
 
   it('says that the reservations are sample data', () => {
-    expect(root.querySelector('.demo-notice[role="status"]')?.textContent).toContain('sample data');
+    expect(root.querySelector('.demo-notice[role="status"]')?.textContent).toContain('datos de ejemplo');
   });
 
   it('shows how many reservations there are in each status', () => {
@@ -35,12 +35,12 @@ describe('AdminReservationsPageComponent', () => {
       (card) => `${card.querySelector('.summary-label')!.textContent} ${card.querySelector('strong')!.textContent}`,
     );
 
-    expect(cards).toEqual(['Active hold 3', 'Confirmed 6', 'Expired 3']);
+    expect(cards).toEqual(['Retención activa 3', 'Confirmada 6', 'Vencida 3']);
   });
 
   it('lists the first page of reservations of all users, ten at a time', () => {
     expect(rows().length).toBe(10);
-    expect(root.querySelector('nav')?.textContent).toContain('Page 1 of 2');
+    expect(root.querySelector('nav')?.textContent).toContain('Página 1 de 2');
     expect(root.querySelector<HTMLButtonElement>('nav button:first-of-type')!.disabled).toBeTrue();
   });
 
@@ -48,7 +48,7 @@ describe('AdminReservationsPageComponent', () => {
     click('nav button:last-of-type');
 
     expect(rows().length).toBe(2);
-    expect(root.querySelector('nav')?.textContent).toContain('Page 2 of 2');
+    expect(root.querySelector('nav')?.textContent).toContain('Página 2 de 2');
     expect(root.querySelector<HTMLButtonElement>('nav button:last-of-type')!.disabled).toBeTrue();
 
     click('nav button:first-of-type');
@@ -61,8 +61,8 @@ describe('AdminReservationsPageComponent', () => {
     filterBy('CONFIRMED');
 
     expect(rows().length).toBe(6);
-    expect(Array.from(rows()).every((row) => row.textContent!.includes('Confirmed'))).toBeTrue();
-    expect(root.querySelector('nav')?.textContent).toContain('Page 1 of 1');
+    expect(Array.from(rows()).every((row) => row.textContent!.includes('Confirmada'))).toBeTrue();
+    expect(root.querySelector('nav')?.textContent).toContain('Página 1 de 1');
     expect(root.querySelectorAll('.summary-card').length).toBe(3);
     expect(root.querySelector('.summary-card')?.textContent).toContain('3');
   });

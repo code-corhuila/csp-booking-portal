@@ -175,6 +175,28 @@
   max-width: 480px;
   margin: 0 auto 25px;
 }
+.csp-booking .seat-rows {
+  max-width: 480px;
+  margin: 0 auto 25px;
+}
+.csp-booking .seats-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.csp-booking .seats-row .row-name {
+  flex: none;
+  width: 1.5rem;
+  align-self: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+.csp-booking .seats-row .seat {
+  flex: 1 1 0;
+  max-width: 44px;
+}
 .csp-booking .seat {
   height: 30px;
   padding: 0;
