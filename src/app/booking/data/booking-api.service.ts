@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Booking, BookingStatus, HoldRequest, Page } from '../model/booking';
+import { SeatMap } from '../model/seat-map';
 
 /**
  * Typed calls to this domain's endpoints. The injected HttpClient is the SHELL's:
@@ -18,6 +19,11 @@ export class BookingApiService {
     return this.http.post<Booking>(`${this.base}/holds`, body, {
       headers: { 'Idempotency-Key': idempotencyKey }
     });
+  }
+
+  /** The seat map of a showtime: the layout of Catalog with the status of each seat (ADR-046). It is a view, never cached. */
+  getSeatMap(showtimeId: string): Observable<SeatMap> {
+    return this.http.get<SeatMap>(`${this.base}/showtimes/${encodeURIComponent(showtimeId)}/seats`);
   }
 
   /** Get a reservation by ID. */
