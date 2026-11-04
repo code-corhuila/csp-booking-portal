@@ -26,8 +26,8 @@ function page(data: Booking[], totalPages = 1): Page<Booking> {
   return { data, meta: { page: 1, limit: 20, total: data.length, totalPages } };
 }
 
-function apiError(message: string): ApiError {
-  return { status: 0, code: 'NETWORK_ERROR', message, details: [], traceId: 't-1', userMessage: message };
+function apiError(message: string, status = 0, code = 'NETWORK_ERROR'): ApiError {
+  return { status, code, message, details: [], traceId: 't-1', userMessage: message };
 }
 
 describe('BookingPageComponent', () => {
@@ -111,6 +111,15 @@ describe('BookingPageComponent', () => {
 
     expect(api.list).toHaveBeenCalledTimes(2);
     expect(root.querySelector('tbody tr')).not.toBeNull();
+  });
+
+  it('shows the error of a server failure instead of any sample, and lets the client retry', () => {
+    api.list.and.returnValue(throwError(() => apiError('El servicio no está disponible.', 503, 'SERVICE_UNAVAILABLE')));
+    const root = render();
+
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('El servicio no está disponible.');
+    expect(root.querySelector('[role="alert"] button')?.textContent).toBe('Reintentar');
+    expect(root.querySelector('tbody tr')).toBeNull();
   });
 
   it('pages in Spanish and keeps the buttons inside the bounds', () => {
