@@ -18,6 +18,11 @@ Fixes and maintenance of the portal on top of `2.0.0`, and the real seat map, wh
   resolves to `::1` while nginx listens on IPv4 only; the portal no longer shows `unhealthy` while it serves traffic. ([#54](https://github.com/code-corhuila/csp-booking-portal/issues/54),
   [#55](https://github.com/code-corhuila/csp-booking-portal/pull/55))
 
+### Removed
+
+- The burned-in sample reservations of "My bookings" and the banner that announced them: the list shows the error when the Booking service does not answer
+  (the sample was only for release 2; [csp-booking-portal#31](https://github.com/code-corhuila/csp-booking-portal/issues/31)).
+
 ### Changed
 
 - The seat map of `/booking/showtime/:id` reads `GET /showtimes/{showtimeId}/seats` of `csp-booking-api` 3.3.0 (ADR-046) and draws the real room by row, with
