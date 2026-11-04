@@ -96,9 +96,9 @@ token or the session: the shell holds them, and the API is the one that validate
   it comes from `GET /showtimes/{showtimeId}/seats` (ADR-046), so a synthetic id that Catalog does not have shows that the
   function does not exist. The title and the room of the map travel with the hold request, which is what the API requires while it
   runs without Catalog (`totalAmount` is `0`).
-- **The list falls back to a burned-in sample** (`sample-reservations.ts`) **only** when the API does not answer or
-  answers a server error, and a banner says so. A real answer, including a refusal such as `401` or `422`, is never
-  replaced. Hold and confirmation are never simulated.
+- **The list has no sample fallback.** When the API does not answer, the page shows the error; sample data was only for
+  release 2. The only sample left is the administration view (see [What is missing](#what-is-missing)). Hold and
+  confirmation are never simulated.
 
 ## Language
 
