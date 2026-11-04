@@ -20,6 +20,8 @@ Fixes and maintenance of the portal on top of `2.0.0`, and the real seat map, wh
 
 ### Removed
 
+- The sample reservations of the administration view (`sample-admin-reservations.ts` and its specs): the view says that it is not available yet and shows
+  no reservation until the contract has a route to list the reservations of other users ([csp-booking-portal#31](https://github.com/code-corhuila/csp-booking-portal/issues/31)).
 - The burned-in sample reservations of "My bookings" and the banner that announced them: the list shows the error when the Booking service does not answer
   (the sample was only for release 2; [csp-booking-portal#31](https://github.com/code-corhuila/csp-booking-portal/issues/31)).
 

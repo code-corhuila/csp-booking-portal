@@ -33,7 +33,7 @@ The shell mounts the remote under `/booking` (it loads `http://localhost:4202/re
 | `/booking` | "My bookings and holds": the reservations of the caller, with the four states of a view (loading, empty, error, data) |
 | `/booking/showtime/:id` | The real seat map of a showtime (ADR-046): taken seats are disabled, select seats and create the temporary hold; a seat taken meanwhile is explained, the map is read again and the client picks again. A failure shows a retry, never a synthetic room |
 | `/booking/checkout/:id` | The summary of a hold with the countdown to its expiration, and the confirmation of the reservation |
-| `/admin/reservations` | Reservations view for the `ADMIN` role, **with sample data** (see [What is missing](#what-is-missing)). It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
+| `/admin/reservations` | Reservations view for the `ADMIN` role: it says that it is **not available yet** and shows no reservation, because the contract has no route to list the reservations of other users (see [What is missing](#what-is-missing)). It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
 
 ## Build, test and run
 
@@ -97,8 +97,7 @@ token or the session: the shell holds them, and the API is the one that validate
   function does not exist. The title and the room of the map travel with the hold request, which is what the API requires while it
   runs without Catalog (`totalAmount` is `0`).
 - **The list has no sample fallback.** When the API does not answer, the page shows the error; sample data was only for
-  release 2. The only sample left is the administration view (see [What is missing](#what-is-missing)). Hold and
-  confirmation are never simulated.
+  release 2, and the administration view does not use it either. Hold and confirmation are never simulated.
 
 ## Language
 
@@ -126,8 +125,8 @@ the shell. `.env.example` only documents that the port of the development server
 - **There is no gateway.** The shell calls `http://localhost:8000` and `csp-api-gateway` holds only its seeded README, while
   `csp-booking-api` publishes no port and has no CORS configuration. The flow was verified against the real API with a
   temporary local proxy, not with the platform.
-- **The admin view uses sample data.** Contract 3.1.0 has no route to list the reservations of other users; the view is in
-  place for the day it exists.
+- **The admin view lists nothing.** Contract 3.1.0 has no route to list the reservations of other users, so the view says that it
+  is not available yet; it reads the route when the contract has it (together with `booking:read:all`, `csp-booking-api#67`).
 - **A client cannot release a hold.** The contract has no such route, so the modal of the navigation map is not built; a hold
   ends by confirmation or expiration.
 - **Showtimes come from a constant,** not from Catalog.
