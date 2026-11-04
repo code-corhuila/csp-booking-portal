@@ -8,6 +8,11 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Removed
+
+- The burned-in sample reservations of "My bookings" and the banner that announced them: the list shows the error when the Booking service does not answer
+  (the sample was only for release 2; [csp-booking-portal#31](https://github.com/code-corhuila/csp-booking-portal/issues/31)).
+
 ### Changed
 
 - The seat map of `/booking/showtime/:id` reads `GET /showtimes/{showtimeId}/seats` of `csp-booking-api` 3.3.0 (ADR-046) and draws the real room by row, with
