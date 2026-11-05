@@ -166,7 +166,7 @@ describe('SeatMapPageComponent', () => {
     expect(holdButton(root).disabled).toBeTrue();
   });
 
-  it('creates the hold with the showtime, the seats in map order and the title and room of the map, then goes to the checkout', () => {
+  it('creates the hold with the showtime, the seats in map order and the title and room of the map, then goes to the snack selection with the reservation id', () => {
     api.hold.and.returnValue(of(held()));
     const root = render();
     pick(root, 'B2', 'A1');
@@ -177,7 +177,10 @@ describe('SeatMapPageComponent', () => {
       { showtimeId: SHOWTIME_ID, seatLabels: ['A1', 'B2'], movieTitle: 'The Silent Reel', roomName: 'Room 1' },
       jasmine.stringMatching(/^[0-9a-f-]{36}$/),
     );
-    expect(router.navigate).toHaveBeenCalledOnceWith(['../../checkout', HOLD_ID], { relativeTo: route });
+    expect(router.navigate).toHaveBeenCalledOnceWith(['../../snack-selection'], {
+      relativeTo: route,
+      queryParams: { reservationId: HOLD_ID },
+    });
   });
 
   it('says a showtime that does not exist is not there, without seats and without a retry', () => {
@@ -248,7 +251,10 @@ describe('SeatMapPageComponent', () => {
     const calls = api.hold.calls.allArgs();
     expect(calls[1][0].seatLabels).toEqual(['B1']);
     expect(calls[1][1]).not.toBe(calls[0][1]);
-    expect(router.navigate).toHaveBeenCalledOnceWith(['../../checkout', HOLD_ID], { relativeTo: route });
+    expect(router.navigate).toHaveBeenCalledOnceWith(['../../snack-selection'], {
+      relativeTo: route,
+      queryParams: { reservationId: HOLD_ID },
+    });
     expect(root.querySelector('[role="alert"]')).toBeNull();
   });
 
