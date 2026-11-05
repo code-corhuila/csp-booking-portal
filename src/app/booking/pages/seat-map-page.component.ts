@@ -153,7 +153,11 @@ export class SeatMapPageComponent {
       .subscribe({
         next: ({ id }) => {
           this.pending.set(false);
-          void this.router.navigate(['../../checkout', id], { relativeTo: this.route });
+          // Snacks are the optional step between the hold and the checkout (navigation map); Concessions owns the page and returns to the checkout
+          void this.router.navigate(['../../snack-selection'], {
+            relativeTo: this.route,
+            queryParams: { reservationId: id },
+          });
         },
         error: (err: unknown) => {
           const error = asApiError(err);
