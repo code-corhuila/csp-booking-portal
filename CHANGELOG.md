@@ -17,6 +17,8 @@ and is tagged `v<version>` once it is merged.
 
 ### Changed
 
+- The container refuses to start when `CORS_ALLOWED_ORIGIN_REGEX` does not start with `^` and end with `$`, the CI checks an empty and two unanchored values, and the
+  `.json` location serves `remoteEntry.json` only, not `importmap.json` (ADR-026, amendment 2026-10-19; [csp-docs#155](https://github.com/code-corhuila/csp-docs/issues/155)).
 - After a successful hold the seat map goes to `/booking/snack-selection?reservationId=<id>` (the optional snack step of the navigation map, owned by Concessions) instead of
   straight to the checkout; the snack page returns to `/booking/checkout/<id>`.
 - The seat map of `/booking/showtime/:id` reads `GET /showtimes/{showtimeId}/seats` of `csp-booking-api` 3.3.0 (ADR-046) and draws the real room by row, with

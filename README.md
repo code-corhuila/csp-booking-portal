@@ -62,14 +62,15 @@ docker build -f deploy/Dockerfile -t csp-booking-portal .
 ```
 
 The shell loads this portal from another origin, so the container renders its CORS rule from the
-environment when it starts (ADR-026) and refuses to start without it:
+environment when it starts (ADR-026) and refuses to start without it, or when the value does not start with `^` and end with `$`
+(an unanchored regex would also allow longer origins such as `http://localhost:4200.evil.example`):
 
 | Variable | Meaning | Development value |
 |---|---|---|
 | `CORS_ALLOWED_ORIGIN_REGEX` | Origins allowed to load `remoteEntry.json` and the modules of the portal | `^http://localhost:420[0-5]$` |
 
 `deploy/compose.yml` sets the development value when the variable is not defined. CI builds the image
-and checks that it answers the allowed origin, stays silent for any other, and does not start without the variable.
+and checks that it answers the allowed origin, stays silent for any other, and does not start with an empty or an unanchored value.
 
 ## How it reaches the API
 
