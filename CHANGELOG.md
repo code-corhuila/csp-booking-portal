@@ -17,6 +17,8 @@ and is tagged `v<version>` once it is merged.
 
 ### Changed
 
+- After a successful hold the seat map goes to `/booking/snack-selection?reservationId=<id>` (the optional snack step of the navigation map, owned by Concessions) instead of
+  straight to the checkout; the snack page returns to `/booking/checkout/<id>`.
 - The seat map of `/booking/showtime/:id` reads `GET /showtimes/{showtimeId}/seats` of `csp-booking-api` 3.3.0 (ADR-046) and draws the real room by row, with
   the held and the confirmed seats disabled; a seat without row or number goes in one unnamed row. There is no synthetic fallback: `404` says the
   showtime does not exist and any other failure shows the message with a retry. After a seat conflict the map is read again. The hold takes the
