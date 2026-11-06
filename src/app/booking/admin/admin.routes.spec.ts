@@ -29,7 +29,7 @@ describe('standalone routes', () => {
     const harness = await RouterTestingHarness.create('/admin/reservations');
 
     expect(TestBed.inject(Router).url).toBe('/admin/reservations');
-    expect((harness.routeNativeElement as HTMLElement).textContent).toContain('Reservations');
+    expect((harness.routeNativeElement as HTMLElement).textContent).toContain('Reservas');
   });
 
   it('keeps the customer entry at the root, apart from the administration address', () => {
