@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ApiError } from '../../shell-contract';
 import { BookingApiService } from '../data/booking-api.service';
+import { CatalogApiService } from '../data/catalog-api.service';
 import { Booking, Page } from '../model/booking';
 import { BookingPageComponent } from './booking-page.component';
 
@@ -32,12 +33,16 @@ function apiError(message: string, status = 0, code = 'NETWORK_ERROR'): ApiError
 
 describe('BookingPageComponent', () => {
   let api: jasmine.SpyObj<BookingApiService>;
+  let catalog: jasmine.SpyObj<CatalogApiService>;
   let fixture: ComponentFixture<BookingPageComponent>;
 
   function render(): HTMLElement {
     TestBed.configureTestingModule({
       imports: [BookingPageComponent],
-      providers: [{ provide: BookingApiService, useValue: api }],
+      providers: [
+        { provide: BookingApiService, useValue: api },
+        { provide: CatalogApiService, useValue: catalog },
+      ],
     });
     fixture = TestBed.createComponent(BookingPageComponent);
     fixture.detectChanges();
@@ -46,6 +51,8 @@ describe('BookingPageComponent', () => {
 
   beforeEach(() => {
     api = jasmine.createSpyObj<BookingApiService>('BookingApiService', ['list', 'hold']);
+    catalog = jasmine.createSpyObj<CatalogApiService>('CatalogApiService', ['getBillboard']);
+    catalog.getBillboard.and.returnValue(of({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } }));
   });
 
   it('titles the screen and the filter in Spanish and offers the statuses by their Spanish name', () => {
@@ -61,6 +68,30 @@ describe('BookingPageComponent', () => {
       'Confirmada',
       'Vencida',
     ]);
+  });
+
+  it('lists Catalog functions and navigates to the seat map', () => {
+    catalog.getBillboard.and.returnValue(of({
+      data: [{
+        movie: { title: 'The Silent Reel' },
+        room: { name: 'Room 1' },
+        showtime: {
+          id: '44444444-4444-4444-4444-444444444444',
+          startsAt: '2026-10-06T20:00:00Z',
+          endsAt: '2026-10-06T22:00:00Z',
+          priceCents: 25000,
+        },
+      }],
+      meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+    }));
+    api.list.and.returnValue(of(page([])));
+
+    const root = render();
+
+    expect(root.querySelector('#showtimes-title')?.textContent).toContain('Funciones disponibles');
+    expect(root.textContent).toContain('The Silent Reel');
+    expect(root.textContent).toContain('Room 1');
+    expect(root.querySelector('[role="list"] button')?.textContent).toBe('Elegir asientos');
   });
 
   it('lists a booking with Spanish headers and the Spanish word of its status, never the API value', () => {

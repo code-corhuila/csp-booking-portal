@@ -90,13 +90,12 @@ token or the session: the shell holds them, and the API is the one that validate
   `process.env`, `import.meta` and any reference to `GATEWAY_URL` or `gatewayUrl`. Injecting `HttpClient` and using
   `HttpParams` stay allowed. Changing the rule is a decision to write down in the pull request that does it.
 
-## Cut 2 data
+## Showtime data
 
-- **The list of showtimes is synthetic.** `src/app/booking/data/synthetic-showtimes.ts` mirrors the showtimes of
-  `csp-catalog-portal` (same ids, titles and room) and only feeds the page that lists them. The seat map is not synthetic any more:
-  it comes from `GET /showtimes/{showtimeId}/seats` (ADR-046), so a synthetic id that Catalog does not have shows that the
-  function does not exist. The title and the room of the map travel with the hold request, which is what the API requires while it
-  runs without Catalog (`totalAmount` is `0`).
+- The list of showtimes comes from Catalog's public billboard endpoint, `GET /api/v1/catalog/billboard`, and no Catalog data is
+  copied into this portal. Selecting a function opens `/booking/showtime/:id`, whose seat map comes from
+  `GET /showtimes/{showtimeId}/seats` (ADR-046). The title and the room of the map travel with the hold request while the
+  Booking API keeps the Cut 2-compatible optional snapshot fields (`totalAmount` is `0`).
 - **The list has no sample fallback.** When the API does not answer, the page shows the error; sample data was only for
   release 2, and the administration view does not use it either. Hold and confirmation are never simulated.
 
@@ -107,8 +106,7 @@ Everything a person reads is in **Spanish** (the dates in `es-CO`); identifiers,
 date helpers live in `src/app/booking/model/labels.ts`, so a screen never prints an API value such as `HELD`. The text of a
 failed request is the `userMessage` of the shell (Spanish). The exception is a `409` or `422`, for which the shell shows the
 message of the API as it is, in English today: the seat conflict is answered by the portal with its own Spanish sentence, and
-any other message of that kind is shown unchanged until the API translates it. The synthetic showtimes keep the names of
-`csp-catalog-portal` (`Room 1`, the titles), because both portals must carry the same data.
+any other message of that kind is shown unchanged until the API translates it. Catalog owns the movie titles, rooms and showtime identifiers shown by the booking portal.
 
 ## Look and scope
 
@@ -130,7 +128,7 @@ the shell. `.env.example` only documents that the port of the development server
   is not available yet; it reads the route when the contract has it (together with `booking:read:all`, `csp-booking-api#67`).
 - **A client cannot release a hold.** The contract has no such route, so the modal of the navigation map is not built; a hold
   ends by confirmation or expiration.
-- **Showtimes come from a constant,** not from Catalog.
+- The list of showtimes is loaded from Catalog's public billboard.
 - **Ten files are committed with CRLF** (`git ls-files --eol` shows them as `i/-text`: `booking-page.component.ts`,
   `booking-form.component.ts`, `booking-api.service.ts`, `booking.ts`, `money.ts`, `ci.yml`, the files of `deploy/` and the
   pull request template). Editing one rewrites the whole file and counts all of it against the 400 lines of a pull request:
