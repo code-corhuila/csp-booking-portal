@@ -17,6 +17,7 @@ and is tagged `v<version>` once it is merged.
 
 ### Changed
 
+- The booking page loads published showtimes from Catalog's public billboard and opens the real Booking seat map for the selected function; the duplicated synthetic showtime dataset was removed ([csp-booking-portal#35](https://github.com/code-corhuila/csp-booking-portal/issues/35)).
 - The container refuses to start when `CORS_ALLOWED_ORIGIN_REGEX` does not start with `^` and end with `$`, the CI checks an empty and two unanchored values, and the
   `.json` location serves `remoteEntry.json` only, not `importmap.json` (ADR-026, amendment 2026-10-19; [csp-docs#155](https://github.com/code-corhuila/csp-docs/issues/155)).
 - The seat map of `/booking/showtime/:id` reads `GET /showtimes/{showtimeId}/seats` of `csp-booking-api` 3.3.0 (ADR-046) and draws the real room by row, with
