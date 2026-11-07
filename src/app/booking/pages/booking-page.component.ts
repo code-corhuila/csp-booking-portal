@@ -4,9 +4,12 @@ import { Subscription } from 'rxjs';
 import { asApiError } from '../../shell-contract';
 import { BookingFormComponent } from '../components/booking-form.component';
 import { BookingApiService } from '../data/booking-api.service';
+import { CatalogApiService } from '../data/catalog-api.service';
+import { BillboardItem } from '../model/catalog';
 import { formatCents } from '../model/money';
 import { Booking, BookingStatus, Page } from '../model/booking';
 import { STATUS_LABEL, formatDateTime } from '../model/labels';
+import { Router } from '@angular/router';
 
 const LIMIT = 20;
 
@@ -17,6 +20,12 @@ type View =
   | { state: 'empty' }
   | { state: 'ready'; page: Page<Booking> };
 
+type ShowtimeView =
+  | { state: 'loading' }
+  | { state: 'error'; message: string }
+  | { state: 'empty' }
+  | { state: 'ready'; items: BillboardItem[] };
+
 @Component({
   selector: 'app-booking-page',
   standalone: true,
@@ -24,6 +33,32 @@ type View =
   template: `
     <section aria-labelledby="bookings-title">
       <h1 id="bookings-title">Mis reservas y retenciones</h1>
+
+      <section aria-labelledby="showtimes-title">
+        <h2 id="showtimes-title">Funciones disponibles</h2>
+        @switch (showtimeView().state) {
+          @case ('loading') { <p role="status">Cargando funciones…</p> }
+          @case ('error') {
+            <div role="alert">
+              <p>{{ showtimeError() }}</p>
+              <button type="button" (click)="loadShowtimes()">Reintentar</button>
+            </div>
+          }
+          @case ('empty') { <p>No hay funciones disponibles.</p> }
+          @case ('ready') {
+            <div class="showtimes" role="list">
+              @for (item of showtimes(); track item.showtime.id) {
+                <article role="listitem">
+                  <h3>{{ item.movie.title }}</h3>
+                  <p>{{ item.room.name }} · {{ date(item.showtime.startsAt) }}</p>
+                  <p>{{ formatPrice(item.showtime.priceCents) }}</p>
+                  <button type="button" (click)="selectShowtime(item.showtime.id)">Elegir asientos</button>
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
 
       <app-booking-form (holdCreated)="onHoldCreated($event)" />
       @if (notice()) { <p role="status">{{ notice() }}</p> }
@@ -87,16 +122,21 @@ type View =
 })
 export class BookingPageComponent {
   private readonly api = inject(BookingApiService);
+  private readonly catalog = inject(CatalogApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   private request?: Subscription;
+  private showtimeRequest?: Subscription;
 
   readonly page = signal(1);
   readonly status = signal<BookingStatus | ''>('');
   readonly view = signal<View>({ state: 'loading' });
+  readonly showtimeView = signal<ShowtimeView>({ state: 'loading' });
   readonly notice = signal<string | null>(null);
 
   constructor() {
     this.load();
+    this.loadShowtimes();
   }
 
   load(): void {
@@ -108,6 +148,33 @@ export class BookingPageComponent {
         next: (page) => this.view.set(page.data.length ? { state: 'ready', page } : { state: 'empty' }),
         error: (err: unknown) => this.view.set({ state: 'error', message: asApiError(err).userMessage }),
       });
+  }
+
+  loadShowtimes(): void {
+    this.showtimeRequest?.unsubscribe();
+    this.showtimeView.set({ state: 'loading' });
+    this.showtimeRequest = this.catalog.getBillboard()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => this.showtimeView.set(
+          page.data.length ? { state: 'ready', items: page.data } : { state: 'empty' },
+        ),
+        error: (err: unknown) => this.showtimeView.set({ state: 'error', message: asApiError(err).userMessage }),
+      });
+  }
+
+  showtimes(): BillboardItem[] {
+    const view = this.showtimeView();
+    return view.state === 'ready' ? view.items : [];
+  }
+
+  showtimeError(): string {
+    const view = this.showtimeView();
+    return view.state === 'error' ? view.message : '';
+  }
+
+  selectShowtime(showtimeId: string): void {
+    void this.router.navigate(['booking', 'showtime', showtimeId]);
   }
 
   filter(value: string): void {
@@ -147,5 +214,9 @@ export class BookingPageComponent {
 
   date(iso: string): string {
     return formatDateTime(iso);
+  }
+
+  formatPrice(cents: number): string {
+    return formatCents(cents);
   }
 }
