@@ -8,8 +8,15 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Added
+
+- The administration view `/admin/reservations` ("Todas las reservas") lists the reservations of every user from `GET /admin/reservations` (`booking-service.yaml` 3.5.0, `listAllReservations`, `booking:read:all`)
+  through `BookingApiService.listAll`, with the status filter, pagination, and loading, empty and error states; a `403` reads as a missing permission
+  (HU-FE-BOOKING-001, [csp-docs#199](https://github.com/code-corhuila/csp-docs/issues/199); route added by `csp-booking-api#91`).
+
 ### Removed
 
+- The "not available yet" state of the administration view, replaced by the real list.
 - The sample reservations of the administration view (`sample-admin-reservations.ts` and its specs): the view says that it is not available yet and shows
   no reservation until the contract has a route to list the reservations of other users ([csp-booking-portal#31](https://github.com/code-corhuila/csp-booking-portal/issues/31)).
 - The burned-in sample reservations of "My bookings" and the banner that announced them: the list shows the error when the Booking service does not answer

@@ -33,7 +33,7 @@ The shell mounts the remote under `/booking` (it loads `http://localhost:4202/re
 | `/booking` | "My bookings and holds": the reservations of the caller, with the four states of a view (loading, empty, error, data) |
 | `/booking/showtime/:id` | The real seat map of a showtime (ADR-046): taken seats are disabled, select seats and create the temporary hold; a seat taken meanwhile is explained, the map is read again and the client picks again. A failure shows a retry, never a synthetic room |
 | `/booking/checkout/:id` | The summary of a hold with the countdown to its expiration, and the confirmation of the reservation |
-| `/admin/reservations` | Reservations view for the `ADMIN` role: it says that it is **not available yet** and shows no reservation, because the contract has no route to list the reservations of other users (see [What is missing](#what-is-missing)). It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
+| `/admin/reservations` | "Todas las reservas" for the `ADMIN` role: the reservations of every user from `GET /admin/reservations` (`listAllReservations`, permission `booking:read:all`), newest first, with the status filter, pagination and the four states of a view; a `403` reads as a missing permission and any other failure offers a retry. It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
 
 ## Build, test and run
 
@@ -75,7 +75,7 @@ and checks that it answers the allowed origin, stays silent for any other, and d
 ## How it reaches the API
 
 Every request goes through the HTTP client **of the shell**. The portal writes only the path
-(`/api/v1/booking/holds`, `/reservations`, `/reservations/{id}/confirm`, as `booking-service.yaml` declares them) and the
+(`/api/v1/booking/holds`, `/reservations`, `/admin/reservations`, `/reservations/{id}/confirm`, as `booking-service.yaml` declares them) and the
 shell's interceptor completes the URL, adds the bearer token and the `X-Correlation-Id`, applies the timeout and turns
 every failure into an `ApiError` (`src/app/shell-contract.ts`, kept in step with `csp-front`). The portal never reads the
 token or the session: the shell holds them, and the API is the one that validates the token.
@@ -97,7 +97,7 @@ token or the session: the shell holds them, and the API is the one that validate
   `GET /showtimes/{showtimeId}/seats` (ADR-046). The title and the room of the map travel with the hold request while the
   Booking API keeps the Cut 2-compatible optional snapshot fields (`totalAmount` is `0`).
 - **The list has no sample fallback.** When the API does not answer, the page shows the error; sample data was only for
-  release 2, and the administration view does not use it either. Hold and confirmation are never simulated.
+  release 2, and the administration view does not use it either (it reads `GET /admin/reservations`). Hold and confirmation are never simulated.
 
 ## Language
 
@@ -124,8 +124,6 @@ the shell. `.env.example` only documents that the port of the development server
 - **There is no gateway.** The shell calls `http://localhost:8000` and `csp-api-gateway` holds only its seeded README, while
   `csp-booking-api` publishes no port and has no CORS configuration. The flow was verified against the real API with a
   temporary local proxy, not with the platform.
-- **The admin view lists nothing.** Contract 3.1.0 has no route to list the reservations of other users, so the view says that it
-  is not available yet; it reads the route when the contract has it (together with `booking:read:all`, `csp-booking-api#67`).
 - **A client cannot release a hold.** The contract has no such route, so the modal of the navigation map is not built; a hold
   ends by confirmation or expiration.
 - The list of showtimes is loaded from Catalog's public billboard.
