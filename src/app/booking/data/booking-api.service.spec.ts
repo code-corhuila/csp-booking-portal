@@ -77,4 +77,23 @@ describe('BookingApiService', () => {
     expect(plain.request.params.has('createdBefore')).toBe(false);
     plain.flush({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
   });
+
+  it('lists the reservations of every user from the administration route with the same filters', () => {
+    service.listAll(3, 20, 'CONFIRMED', '2026-10-04T12:00:00Z').subscribe();
+    const filtered = http.expectOne(request =>
+      request.url === '/api/v1/booking/admin/reservations'
+      && request.params.get('page') === '3'
+      && request.params.get('limit') === '20'
+      && request.params.get('status') === 'CONFIRMED'
+      && request.params.get('createdBefore') === '2026-10-04T12:00:00Z'
+    );
+    expect(filtered.request.method).toBe('GET');
+    filtered.flush({ data: [], meta: { page: 3, limit: 20, total: 0, totalPages: 0 } });
+
+    service.listAll(1, 20).subscribe();
+    const plain = http.expectOne(request => request.url === '/api/v1/booking/admin/reservations');
+    expect(plain.request.params.has('status')).toBe(false);
+    expect(plain.request.params.has('createdBefore')).toBe(false);
+    plain.flush({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+  });
 });
