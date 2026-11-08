@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { of } from 'rxjs';
+import { BookingApiService } from '../data/booking-api.service';
 import { BOOKING_ROUTES } from '../booking.routes';
 import { BookingLayoutComponent } from '../layout/booking-layout.component';
 import { STANDALONE_ROUTES } from '../../standalone.routes';
@@ -23,13 +25,18 @@ describe('the administration entry (ADR-027)', () => {
 });
 
 describe('standalone routes', () => {
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter(STANDALONE_ROUTES)] }));
+  beforeEach(() => TestBed.configureTestingModule({
+    providers: [
+      provideRouter(STANDALONE_ROUTES),
+      { provide: BookingApiService, useValue: { listAll: () => of({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } }) } },
+    ],
+  }));
 
   it('mounts the administration entry at its documented address', async () => {
     const harness = await RouterTestingHarness.create('/admin/reservations');
 
     expect(TestBed.inject(Router).url).toBe('/admin/reservations');
-    expect((harness.routeNativeElement as HTMLElement).textContent).toContain('Reservas');
+    expect((harness.routeNativeElement as HTMLElement).textContent).toContain('Todas las reservas');
   });
 
   it('keeps the customer entry at the root, apart from the administration address', () => {
