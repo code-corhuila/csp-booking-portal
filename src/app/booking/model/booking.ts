@@ -10,7 +10,8 @@ export interface Booking {
   expiresAt: string | null;
   movieTitleSnapshot: string;
   roomNameSnapshot: string;
-  totalAmount: number;
+  /** Cents; the contract does not require it (present when pricing is enabled). */
+  totalAmount?: number;
   createdAt: string;
   confirmedAt: string | null;
 }

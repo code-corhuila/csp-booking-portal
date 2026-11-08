@@ -40,9 +40,22 @@ export class BookingApiService {
 
   /** List the caller's reservations, newest first. `createdBefore` is an RFC 3339 instant (UTC). */
   list(page: number, limit: number, status?: BookingStatus, createdBefore?: string): Observable<Page<Booking>> {
+    return this.http.get<Page<Booking>>(`${this.base}/reservations`, {
+      params: this.listParams(page, limit, status, createdBefore),
+    });
+  }
+
+  /** List the reservations of every user, newest first (`listAllReservations`, permission `booking:read:all`). Same filters as `list`. */
+  listAll(page: number, limit: number, status?: BookingStatus, createdBefore?: string): Observable<Page<Booking>> {
+    return this.http.get<Page<Booking>>(`${this.base}/admin/reservations`, {
+      params: this.listParams(page, limit, status, createdBefore),
+    });
+  }
+
+  private listParams(page: number, limit: number, status?: BookingStatus, createdBefore?: string): HttpParams {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (status) params = params.set('status', status);
     if (createdBefore) params = params.set('createdBefore', createdBefore);
-    return this.http.get<Page<Booking>>(`${this.base}/reservations`, { params });
+    return params;
   }
 }
