@@ -1,6 +1,5 @@
-import { Component, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DemoModeService } from '../data/demo-mode.service';
 
 /**
  * Parent of every booking route. The portal runs inside the shell as a federated
@@ -16,15 +15,8 @@ import { DemoModeService } from '../data/demo-mode.service';
   styleUrl: './booking-layout.component.css',
   template: `
     <div class="csp-booking">
-      @if (demo.active()) {
-        <p class="demo-notice" role="status">
-          You are looking at sample data: the Booking service did not answer, so the reservations below are an example.
-        </p>
-      }
       <router-outlet />
     </div>
   `,
 })
-export class BookingLayoutComponent {
-  protected readonly demo = inject(DemoModeService);
-}
+export class BookingLayoutComponent {}

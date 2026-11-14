@@ -44,6 +44,27 @@ describe('BookingFormComponent', () => {
     request.flush({ id: 'reservation-1' });
   });
 
+  it('labels the form and says what a wrong value needs, in Spanish', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+
+    expect(root.querySelector('h2')?.textContent).toContain('Crear retención');
+    expect(Array.from(root.querySelectorAll('label')).map((label) => label.textContent)).toEqual([
+      'ID de la función',
+      'Asientos (separados por comas)',
+      'Título de la película',
+      'Nombre de la sala',
+    ]);
+
+    fixture.componentInstance.submit();
+    fixture.detectChanges();
+
+    expect(root.querySelector('#showtimeId-error')?.textContent).toContain('Escribe el ID de la función');
+    expect(root.querySelector('#seatLabels-error')?.textContent).toContain('Escribe uno o más asientos');
+    expect(root.querySelector('button[type="submit"]')?.textContent).toContain('Crear retención');
+  });
+
   it('shows the field errors that the shell reports for the snapshot', () => {
     const api = TestBed.inject(BookingApiService);
     spyOn(api, 'hold').and.returnValue(throwError(() => ({

@@ -32,6 +32,14 @@ describe('BookingApiService', () => {
     request.flush({ id: 'reservation-1' });
   });
 
+  it('reads the seat map of a showtime with an encoded id and no body', () => {
+    service.getSeatMap('showtime/1').subscribe();
+
+    const request = http.expectOne('/api/v1/booking/showtimes/showtime%2F1/seats');
+    expect(request.request.method).toBe('GET');
+    request.flush({ showtimeId: 'showtime/1', seats: [] });
+  });
+
   it('sends confirmation with its idempotency key and no body', () => {
     service.confirm('reservation-1', 'confirm-key').subscribe();
 
@@ -66,6 +74,25 @@ describe('BookingApiService', () => {
 
     service.list(1, 20).subscribe();
     const plain = http.expectOne(request => request.url === '/api/v1/booking/reservations');
+    expect(plain.request.params.has('createdBefore')).toBe(false);
+    plain.flush({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+  });
+
+  it('lists the reservations of every user from the administration route with the same filters', () => {
+    service.listAll(3, 20, 'CONFIRMED', '2026-10-04T12:00:00Z').subscribe();
+    const filtered = http.expectOne(request =>
+      request.url === '/api/v1/booking/admin/reservations'
+      && request.params.get('page') === '3'
+      && request.params.get('limit') === '20'
+      && request.params.get('status') === 'CONFIRMED'
+      && request.params.get('createdBefore') === '2026-10-04T12:00:00Z'
+    );
+    expect(filtered.request.method).toBe('GET');
+    filtered.flush({ data: [], meta: { page: 3, limit: 20, total: 0, totalPages: 0 } });
+
+    service.listAll(1, 20).subscribe();
+    const plain = http.expectOne(request => request.url === '/api/v1/booking/admin/reservations');
+    expect(plain.request.params.has('status')).toBe(false);
     expect(plain.request.params.has('createdBefore')).toBe(false);
     plain.flush({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
   });

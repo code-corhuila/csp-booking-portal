@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Booking, BookingStatus, HoldRequest, Page } from '../model/booking';
+import { SeatMap } from '../model/seat-map';
 
 /**
  * Typed calls to this domain's endpoints. The injected HttpClient is the SHELL's:
@@ -20,6 +21,11 @@ export class BookingApiService {
     });
   }
 
+  /** The seat map of a showtime: the layout of Catalog with the status of each seat (ADR-046). It is a view, never cached. */
+  getSeatMap(showtimeId: string): Observable<SeatMap> {
+    return this.http.get<SeatMap>(`${this.base}/showtimes/${encodeURIComponent(showtimeId)}/seats`);
+  }
+
   /** Get a reservation by ID. */
   getReservation(id: string): Observable<Booking> {
     return this.http.get<Booking>(`${this.base}/reservations/${encodeURIComponent(id)}`);
@@ -34,9 +40,22 @@ export class BookingApiService {
 
   /** List the caller's reservations, newest first. `createdBefore` is an RFC 3339 instant (UTC). */
   list(page: number, limit: number, status?: BookingStatus, createdBefore?: string): Observable<Page<Booking>> {
+    return this.http.get<Page<Booking>>(`${this.base}/reservations`, {
+      params: this.listParams(page, limit, status, createdBefore),
+    });
+  }
+
+  /** List the reservations of every user, newest first (`listAllReservations`, permission `booking:read:all`). Same filters as `list`. */
+  listAll(page: number, limit: number, status?: BookingStatus, createdBefore?: string): Observable<Page<Booking>> {
+    return this.http.get<Page<Booking>>(`${this.base}/admin/reservations`, {
+      params: this.listParams(page, limit, status, createdBefore),
+    });
+  }
+
+  private listParams(page: number, limit: number, status?: BookingStatus, createdBefore?: string): HttpParams {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (status) params = params.set('status', status);
     if (createdBefore) params = params.set('createdBefore', createdBefore);
-    return this.http.get<Page<Booking>>(`${this.base}/reservations`, { params });
+    return params;
   }
-}
+}

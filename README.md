@@ -31,9 +31,9 @@ The shell mounts the remote under `/booking` (it loads `http://localhost:4202/re
 | Route | What it does |
 |---|---|
 | `/booking` | "My bookings and holds": the reservations of the caller, with the four states of a view (loading, empty, error, data) |
-| `/booking/showtime/:id` | The seat map of a showtime: select seats and create the temporary hold; a seat taken by another client is explained and the client picks again |
+| `/booking/showtime/:id` | The real seat map of a showtime (ADR-046): taken seats are disabled, select seats and create the temporary hold; a seat taken meanwhile is explained, the map is read again and the client picks again. A failure shows a retry, never a synthetic room |
 | `/booking/checkout/:id` | The summary of a hold with the countdown to its expiration, and the confirmation of the reservation |
-| `/admin/reservations` | Reservations view for the `ADMIN` role, **with sample data** (see [What is missing](#what-is-missing)). It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
+| `/admin/reservations` | "Todas las reservas" for the `ADMIN` role: the reservations of every user from `GET /admin/reservations` (`listAllReservations`, permission `booking:read:all`), newest first, with the status filter, pagination and the four states of a view; a `403` reads as a missing permission and any other failure offers a retry. It is the federated entry `./admin-routes` (ADR-027), which the shell mounts at this address behind `roleGuard('ADMIN')`; the portal checks no role itself. The entry `./routes` holds only the customer screens |
 
 ## Build, test and run
 
@@ -43,7 +43,7 @@ Requirements: Node 22.12 or later (24 works) and a Chrome for the tests.
 npm ci                                      # install from the lockfile
 npm run build                               # production build in dist/csp-booking-portal
 npm run lint
-npm test -- --browsers=ChromeHeadless       # 90 specs, one run
+npm test -- --browsers=ChromeHeadless       # every spec, one run
 npm start                                   # development server and remote on http://localhost:4202
 ```
 
@@ -62,19 +62,20 @@ docker build -f deploy/Dockerfile -t csp-booking-portal .
 ```
 
 The shell loads this portal from another origin, so the container renders its CORS rule from the
-environment when it starts (ADR-026) and refuses to start without it:
+environment when it starts (ADR-026) and refuses to start without it, or when the value does not start with `^` and end with `$`
+(an unanchored regex would also allow longer origins such as `http://localhost:4200.evil.example`):
 
 | Variable | Meaning | Development value |
 |---|---|---|
 | `CORS_ALLOWED_ORIGIN_REGEX` | Origins allowed to load `remoteEntry.json` and the modules of the portal | `^http://localhost:420[0-5]$` |
 
 `deploy/compose.yml` sets the development value when the variable is not defined. CI builds the image
-and checks that it answers the allowed origin, stays silent for any other, and does not start without the variable.
+and checks that it answers the allowed origin, stays silent for any other, and does not start with an empty or an unanchored value.
 
 ## How it reaches the API
 
 Every request goes through the HTTP client **of the shell**. The portal writes only the path
-(`/api/v1/booking/holds`, `/reservations`, `/reservations/{id}/confirm`, as `booking-service.yaml` declares them) and the
+(`/api/v1/booking/holds`, `/reservations`, `/admin/reservations`, `/reservations/{id}/confirm`, as `booking-service.yaml` declares them) and the
 shell's interceptor completes the URL, adds the bearer token and the `X-Correlation-Id`, applies the timeout and turns
 every failure into an `ApiError` (`src/app/shell-contract.ts`, kept in step with `csp-front`). The portal never reads the
 token or the session: the shell holds them, and the API is the one that validates the token.
@@ -84,15 +85,28 @@ token or the session: the shell holds them, and the API is the one that validate
 - After a failed confirmation the portal reads the reservation again before it offers a retry, because the answer may
   have been lost after the API applied the transition.
 - The API can only be reached through the gateway; see below.
+- **The boundary is checked by `npm run lint`** (so by the CI), not only written down: in `src/app/**`, outside the specs,
+  `eslint.config.js` rejects `provideHttpClient`, the HTTP modules, interceptors and backends of `@angular/common/http`,
+  `process.env`, `import.meta` and any reference to `GATEWAY_URL` or `gatewayUrl`. Injecting `HttpClient` and using
+  `HttpParams` stay allowed. Changing the rule is a decision to write down in the pull request that does it.
 
-## Cut 2 data
+## Showtime data
 
-- **Showtimes are synthetic.** Catalog has no backend yet, so `src/app/booking/data/synthetic-showtimes.ts` mirrors the
-  showtimes of `csp-catalog-portal` (same ids, titles, room and seats `A1` to `F8`). The title and the room travel with the
-  hold request, which is what the API requires while it runs without Catalog (`totalAmount` is `0`).
-- **The list falls back to a burned-in sample** (`sample-reservations.ts`) **only** when the API does not answer or
-  answers a server error, and a banner says so. A real answer, including a refusal such as `401` or `422`, is never
-  replaced. Hold and confirmation are never simulated.
+- The list of showtimes comes from Catalog's public billboard endpoint, `GET /api/v1/catalog/billboard`, and no Catalog data is
+  copied into this portal. Selecting a function opens `/booking/showtime/:id`, whose seat map comes from
+  `GET /showtimes/{showtimeId}/seats` (ADR-046). The title and the room of the map travel with the hold request while the
+  Booking API keeps the Cut 2-compatible optional snapshot fields (`totalAmount` is `0`).
+- **The list has no sample fallback.** When the API does not answer, the page shows the error; sample data was only for
+  release 2, and the administration view does not use it either (it reads `GET /admin/reservations`). Hold and confirmation are never simulated.
+
+## Language
+
+Everything a person reads is in **Spanish** (the dates in `es-CO`); identifiers, comments and the code stay in English
+(`#56`). The Spanish words of a status (`Retención activa`, `Confirmada`, `Vencida`), the sentence of a seat conflict and the
+date helpers live in `src/app/booking/model/labels.ts`, so a screen never prints an API value such as `HELD`. The text of a
+failed request is the `userMessage` of the shell (Spanish). The exception is a `409` or `422`, for which the shell shows the
+message of the API as it is, in English today: the seat conflict is answered by the portal with its own Spanish sentence, and
+any other message of that kind is shown unchanged until the API translates it. Catalog owns the movie titles, rooms and showtime identifiers shown by the booking portal.
 
 ## Look and scope
 
@@ -110,11 +124,9 @@ the shell. `.env.example` only documents that the port of the development server
 - **There is no gateway.** The shell calls `http://localhost:8000` and `csp-api-gateway` holds only its seeded README, while
   `csp-booking-api` publishes no port and has no CORS configuration. The flow was verified against the real API with a
   temporary local proxy, not with the platform.
-- **The admin view uses sample data.** Contract 3.1.0 has no route to list the reservations of other users; the view is in
-  place for the day it exists.
 - **A client cannot release a hold.** The contract has no such route, so the modal of the navigation map is not built; a hold
   ends by confirmation or expiration.
-- **Showtimes come from a constant,** not from Catalog.
+- The list of showtimes is loaded from Catalog's public billboard.
 - **Ten files are committed with CRLF** (`git ls-files --eol` shows them as `i/-text`: `booking-page.component.ts`,
   `booking-form.component.ts`, `booking-api.service.ts`, `booking.ts`, `money.ts`, `ci.yml`, the files of `deploy/` and the
   pull request template). Editing one rewrites the whole file and counts all of it against the 400 lines of a pull request:

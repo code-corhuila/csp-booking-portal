@@ -1,81 +1,176 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
+import { ApiError } from '../../shell-contract';
+import { BookingApiService } from '../data/booking-api.service';
+import { Booking, Page } from '../model/booking';
+import { formatCents } from '../model/money';
 import { AdminReservationsPageComponent } from './admin-reservations-page.component';
 
+function booking(overrides: Partial<Booking> = {}): Booking {
+  return {
+    id: '11111111-1111-4111-8111-111111111111',
+    showtimeId: '33333333-3333-4333-8333-333333333333',
+    seatLabels: ['A1', 'A2'],
+    status: 'CONFIRMED',
+    userId: '22222222-2222-4222-8222-222222222222',
+    expiresAt: null,
+    movieTitleSnapshot: 'Dune',
+    roomNameSnapshot: 'Room 1',
+    totalAmount: 2500000,
+    createdAt: '2026-10-06T20:00:00Z',
+    confirmedAt: '2026-10-06T20:05:00Z',
+    ...overrides,
+  };
+}
+
+function page(data: Booking[], totalPages = 1): Page<Booking> {
+  return { data, meta: { page: 1, limit: 20, total: data.length, totalPages } };
+}
+
+function apiError(status: number, userMessage: string): ApiError {
+  return { status, code: 'ERR', message: userMessage, details: [], traceId: 't-1', userMessage };
+}
+
+function cells(root: HTMLElement): (string | undefined)[] {
+  return Array.from(root.querySelectorAll('tbody td')).map((td) => td.textContent?.trim());
+}
+
 describe('AdminReservationsPageComponent', () => {
+  let api: jasmine.SpyObj<BookingApiService>;
   let fixture: ComponentFixture<AdminReservationsPageComponent>;
-  let root: HTMLElement;
 
-  const rows = () => root.querySelectorAll('tbody tr');
-  const click = (selector: string) => {
-    (root.querySelector(selector) as HTMLButtonElement).click();
-    fixture.detectChanges();
-  };
-  const filterBy = (status: string) => {
-    const select = root.querySelector('select') as HTMLSelectElement;
-    select.value = status;
-    select.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-  };
-
-  beforeEach(() => {
-    jasmine.clock().install();
-    jasmine.clock().mockDate(new Date(Date.UTC(2026, 9, 8, 12, 0, 0)));
+  function render(): HTMLElement {
+    TestBed.configureTestingModule({
+      imports: [AdminReservationsPageComponent],
+      providers: [{ provide: BookingApiService, useValue: api }],
+    });
     fixture = TestBed.createComponent(AdminReservationsPageComponent);
     fixture.detectChanges();
-    root = fixture.nativeElement;
-  });
-  afterEach(() => jasmine.clock().uninstall());
+    return fixture.nativeElement;
+  }
 
-  it('says that the reservations are sample data', () => {
-    expect(root.querySelector('.demo-notice[role="status"]')?.textContent).toContain('sample data');
+  beforeEach(() => {
+    api = jasmine.createSpyObj<BookingApiService>('BookingApiService', ['listAll']);
   });
 
-  it('shows how many reservations there are in each status', () => {
-    const cards = Array.from(root.querySelectorAll('.summary-card')).map(
-      (card) => `${card.querySelector('.summary-label')!.textContent} ${card.querySelector('strong')!.textContent}`,
+  it('titles the screen in Spanish and no longer says that it is not available', () => {
+    api.listAll.and.returnValue(of(page([booking()])));
+
+    const root = render();
+
+    expect(root.querySelector('h1')?.textContent).toBe('Todas las reservas');
+    expect(root.textContent).not.toContain('todavía no está disponible');
+  });
+
+  it('asks for the first page of the administration list without a filter', () => {
+    api.listAll.and.returnValue(of(page([])));
+
+    render();
+
+    expect(api.listAll).toHaveBeenCalledOnceWith(1, 20, undefined);
+  });
+
+  it('shows the loading state while the list is read', () => {
+    api.listAll.and.returnValue(new Observable<Page<Booking>>());
+
+    const root = render();
+
+    expect(root.querySelector('[role="status"]')?.textContent).toContain('Cargando');
+    expect(root.querySelector('table')).toBeNull();
+  });
+
+  it('lists the reservation, its user, function, seats, status and amount in Spanish, never the API status', () => {
+    api.listAll.and.returnValue(of(page([booking()])));
+
+    const root = render();
+
+    expect(Array.from(root.querySelectorAll('th')).map((th) => th.textContent)).toEqual([
+      'Reserva', 'Usuario', 'Película', 'Sala', 'Función', 'Asientos', 'Estado', 'Total', 'Creada', 'Confirmada',
+    ]);
+    expect(cells(root).slice(0, 8)).toEqual([
+      '11111111-1111-4111-8111-111111111111',
+      '22222222-2222-4222-8222-222222222222',
+      'Dune',
+      'Room 1',
+      '33333333-3333-4333-8333-333333333333',
+      'A1, A2',
+      'Confirmada',
+      formatCents(2500000),
+    ]);
+    expect(root.textContent).not.toContain('CONFIRMED');
+  });
+
+  it('shows a dash for a missing amount and says that a hold is not confirmed', () => {
+    api.listAll.and.returnValue(of(page([booking({ status: 'HELD', confirmedAt: null, totalAmount: undefined })])));
+
+    const row = cells(render());
+
+    expect(row[6]).toBe('Retención activa');
+    expect(row[7]).toBe('—');
+    expect(row[9]).toBe('Sin confirmar');
+  });
+
+  it('says that there are no reservations when the page is empty', () => {
+    api.listAll.and.returnValue(of(page([])));
+
+    const root = render();
+
+    expect(root.textContent).toContain('No hay reservas');
+    expect(root.querySelector('table')).toBeNull();
+  });
+
+  it('filters by status from the first page', () => {
+    api.listAll.and.returnValue(of(page([booking()], 3)));
+    const root = render();
+    api.listAll.calls.reset();
+
+    const select = root.querySelector('#status-filter') as HTMLSelectElement;
+    expect(Array.from(select.options).map((option) => option.textContent)).toEqual([
+      'Todos', 'Retención activa', 'Confirmada', 'Vencida',
+    ]);
+    select.value = 'EXPIRED';
+    select.dispatchEvent(new Event('change'));
+
+    expect(api.listAll).toHaveBeenCalledOnceWith(1, 20, 'EXPIRED');
+  });
+
+  it('pages and keeps the buttons inside the bounds', () => {
+    api.listAll.and.returnValue(of(page([booking()], 2)));
+    const root = render();
+    const [previous, next] = Array.from(root.querySelectorAll('nav button')) as HTMLButtonElement[];
+
+    expect(root.querySelector('nav')?.textContent).toContain('Página 1 de 2');
+    expect(previous.disabled).toBeTrue();
+    expect(next.disabled).toBeFalse();
+
+    api.listAll.calls.reset();
+    next.click();
+
+    expect(api.listAll).toHaveBeenCalledOnceWith(2, 20, undefined);
+  });
+
+  it('reads a 403 as a missing permission, without a retry', () => {
+    api.listAll.and.returnValue(throwError(() => apiError(403, 'Forbidden')));
+
+    const root = render();
+
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('No tienes permiso para ver todas las reservas');
+    expect(root.querySelector('button')).toBeNull();
+  });
+
+  it('shows any other failure with a retry that reads the list again', () => {
+    api.listAll.and.returnValues(
+      throwError(() => apiError(503, 'El servicio no está disponible.')),
+      of(page([booking()])),
     );
 
-    expect(cards).toEqual(['Active hold 3', 'Confirmed 6', 'Expired 3']);
-  });
+    const root = render();
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('El servicio no está disponible.');
 
-  it('lists the first page of reservations of all users, ten at a time', () => {
-    expect(rows().length).toBe(10);
-    expect(root.querySelector('nav')?.textContent).toContain('Page 1 of 2');
-    expect(root.querySelector<HTMLButtonElement>('nav button:first-of-type')!.disabled).toBeTrue();
-  });
+    (root.querySelector('[role="alert"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
 
-  it('moves to the next page and back', () => {
-    click('nav button:last-of-type');
-
-    expect(rows().length).toBe(2);
-    expect(root.querySelector('nav')?.textContent).toContain('Page 2 of 2');
-    expect(root.querySelector<HTMLButtonElement>('nav button:last-of-type')!.disabled).toBeTrue();
-
-    click('nav button:first-of-type');
-    expect(rows().length).toBe(10);
-  });
-
-  it('filters by status, goes back to the first page and keeps the summary of everything', () => {
-    click('nav button:last-of-type');
-
-    filterBy('CONFIRMED');
-
-    expect(rows().length).toBe(6);
-    expect(Array.from(rows()).every((row) => row.textContent!.includes('Confirmed'))).toBeTrue();
-    expect(root.querySelector('nav')?.textContent).toContain('Page 1 of 1');
-    expect(root.querySelectorAll('.summary-card').length).toBe(3);
-    expect(root.querySelector('.summary-card')?.textContent).toContain('3');
-  });
-
-  it('shows all of them again when the filter is cleared', () => {
-    filterBy('EXPIRED');
-    expect(rows().length).toBe(3);
-
-    filterBy('');
-    expect(rows().length).toBe(10);
-  });
-
-  it('offers no action on a reservation: it is read only', () => {
-    expect(root.querySelectorAll('tbody button').length).toBe(0);
+    expect(api.listAll).toHaveBeenCalledTimes(2);
+    expect(root.querySelector('table')).not.toBeNull();
   });
 });
